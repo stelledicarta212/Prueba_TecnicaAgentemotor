@@ -222,3 +222,167 @@ Funciones creadas en `src/db.py`:
 - Implementar `POST /api/contact-attempts`.
 - Implementar `POST /api/policies/{id}/renew`.
 - Implementar tests automatizados de clasificacion y renovacion.
+
+## Fecha
+
+2026-06-02
+
+## Agente responsable
+
+Backend - Codex CLI
+
+## Objetivo
+
+Implementar `src/app.py` con Flask y los tres endpoints definidos en `spec.md`, manteniendo SQLite como fuente de verdad y `src/db.py` como unica via de acceso a la base de datos.
+
+## Archivos modificados
+
+- `src/app.py`
+- `requirements.txt`
+- `ai_history/02_implementacion.md`
+
+## Cambios realizados
+
+- Se implemento una aplicacion Flask simple y ejecutable localmente.
+- Se creo `GET /api/dashboard`.
+- Se creo `POST /api/contact-attempts`.
+- Se creo `POST /api/policies/<id>/renew`.
+- Se implemento la clasificacion de prioridad en backend usando `expiration_date` y `renewal_status`.
+- Se centralizo todo acceso a SQLite mediante las funciones de `src/db.py`.
+- Se agrego Flask a `requirements.txt`.
+- Se valido la app con el cliente de pruebas de Flask usando datos de `seed.sql`.
+
+## Endpoints creados o modificados
+
+- `GET /api/dashboard`: retorna resumen y listado de polizas clasificadas.
+- `POST /api/contact-attempts`: registra una gestion comercial asociada a una poliza.
+- `POST /api/policies/<id>/renew`: renueva una poliza, actualiza fecha de vencimiento y marca estado `renewed`.
+
+## Formato de request
+
+`GET /api/dashboard`
+
+No requiere body.
+
+`POST /api/contact-attempts`
+
+```json
+{
+  "policy_id": 1,
+  "channel": "call",
+  "result": "Cliente interesado",
+  "notes": "Solicita propuesta",
+  "attempted_at": "2026-06-02T17:30:00"
+}
+```
+
+Campos obligatorios:
+
+- `policy_id`
+- `channel`: `call`, `email` o `message`
+- `result`
+
+Campos opcionales:
+
+- `notes`
+- `attempted_at`
+
+`POST /api/policies/<id>/renew`
+
+```json
+{
+  "expiration_date": "2027-06-02"
+}
+```
+
+## Formato de response
+
+`GET /api/dashboard`
+
+```json
+{
+  "summary": {
+    "total": 8,
+    "proxima_a_vencer": 2,
+    "ventana_critica": 2,
+    "nueva_contratacion": 2,
+    "renovada": 2,
+    "sin_prioridad": 0
+  },
+  "policies": []
+}
+```
+
+Cada poliza incluye:
+
+- datos de poliza
+- `priority`
+- datos de cliente
+- datos de asesor
+
+`POST /api/contact-attempts`
+
+```json
+{
+  "contact_attempt": {
+    "id": 1,
+    "policy_id": 1,
+    "client_id": 1,
+    "advisor_id": 1,
+    "channel": "call",
+    "result": "Cliente interesado",
+    "notes": "Solicita propuesta",
+    "attempted_at": "2026-06-02 17:30:00",
+    "created_at": "2026-06-02 17:30:00"
+  }
+}
+```
+
+`POST /api/policies/<id>/renew`
+
+```json
+{
+  "policy": {
+    "id": 3,
+    "policy_number": "POL-AUTO-0003",
+    "expiration_date": "2027-06-02",
+    "renewal_status": "renewed",
+    "renewed_at": "2026-06-02 17:30:00",
+    "priority": "renovada"
+  }
+}
+```
+
+## Cambios en base de datos
+
+- No se modifico `schema.sql`.
+- `POST /api/contact-attempts` inserta registros en `contact_attempts`.
+- `POST /api/policies/<id>/renew` actualiza `policies.expiration_date`, `policies.renewal_status`, `policies.renewed_at` y `policies.updated_at`.
+
+## Decisiones tomadas
+
+- `src/app.py` no accede a SQLite directamente; usa `db.fetch_all`, `db.fetch_one`, `db.execute_query` y `db.initialize_schema`.
+- La app inicializa solo el schema al arrancar, pero no carga seed automaticamente para evitar borrar datos reales.
+- En `POST /api/contact-attempts`, `client_id` y `advisor_id` se derivan desde SQLite usando `policy_id`; no se confia en el frontend para esos datos.
+- La prioridad se devuelve como `proxima_a_vencer`, `ventana_critica`, `nueva_contratacion`, `renovada` o `sin_prioridad`.
+- Se agrego `sin_prioridad` para polizas pendientes que vencen en mas de 30 dias, fuera de los grupos operativos de gestion inmediata.
+- No se implemento autenticacion ni endpoints fuera del alcance definido.
+
+## Riesgos identificados
+
+- Aun faltan tests automatizados formales; la validacion actual se hizo con el cliente de pruebas de Flask.
+- El frontend debe consumir `priority` desde el backend y no duplicar la regla de clasificacion.
+- La carga de seed sigue siendo manual mediante `db.load_seed()` o `db.initialize_database(with_seed=True)`.
+
+## Pendientes para Frontend
+
+- Consumir `GET /api/dashboard` y usar `summary` + `policies`.
+- Mostrar `priority` exactamente como llega del backend o mapearlo solo a etiquetas visuales.
+- Enviar gestiones comerciales a `POST /api/contact-attempts` con `policy_id`, `channel` y `result`.
+- Enviar renovaciones a `POST /api/policies/<id>/renew` con `expiration_date`.
+- No calcular prioridades en JavaScript.
+
+## Pendientes generales
+
+- Implementar tests automatizados para clasificacion y renovacion.
+- Documentar pruebas manuales en Postman.
