@@ -320,3 +320,52 @@ La API puede evolucionar.
 Pero la fuente de verdad siempre debe seguir siendo SQLite.
 
 Toda decisión de frontend debe respetar este principio.
+
+
+## Control de versiones (GitHub)
+
+Este proyecto utiliza GitHub como repositorio central de colaboración.
+
+Repositorio:
+
+https://github.com/stelledicarta212/Prueba_TecnicaAgentemotor
+
+### Reglas obligatorias
+
+Antes de iniciar una tarea:
+
+1. Revisar el estado actual del repositorio.
+2. Revisar la documentación disponible.
+3. Revisar ai_history.
+4. Trabajar sobre la versión más reciente.
+
+Al finalizar una tarea:
+
+1. Actualizar ai_history correspondiente.
+2. Verificar que los cambios sean consistentes con spec.md.
+3. Preparar cambios para control de versiones.
+4. Mantener el repositorio sincronizado.
+
+### Objetivo
+
+GitHub actúa como fuente de colaboración entre agentes.
+
+La documentación, el código, los diagramas, las skills y el historial de implementación deben permanecer alineados con la versión más reciente del repositorio.
+
+Ningún agente debe asumir contexto que no exista en GitHub o en la documentación oficial del proyecto.
+
+## Regla de sincronización
+
+Después de completar una tarea importante:
+
+- Documentar cambios en ai_history.
+- Verificar impacto sobre otros agentes.
+- Mantener GitHub actualizado.
+- Dejar suficiente contexto para que otro agente pueda continuar el trabajo sin necesidad de explicación adicional.
+
+El proyecto debe poder retomarse únicamente leyendo:
+
+- spec.md
+- docs/
+- skills/
+- ai_history/
