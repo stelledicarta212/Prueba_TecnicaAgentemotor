@@ -441,3 +441,99 @@ No aplica. No hubo cambios en SQLite.
 ## Pendientes generales
 
 - Mantener validaciones finales antes de la entrega.
+
+## Fecha
+
+2026-06-02
+
+## Agente responsable
+
+Backend - Codex CLI
+
+## Objetivo
+
+Implementar pruebas automatizadas con pytest para validar la clasificacion de renovaciones y la renovacion de polizas usando SQLite como fuente de verdad.
+
+## Archivos modificados
+
+- `tests/test_renewals.py`
+- `src/app.py`
+- `requirements.txt`
+- `ai_history/02_implementacion.md`
+
+## Cambios realizados
+
+- Se implementaron 3 tests reales en `tests/test_renewals.py`.
+- Se agrego `pytest` a `requirements.txt`.
+- Se ajusto `create_app(database_path=None)` para permitir ejecutar la app contra una base SQLite temporal en tests.
+- Se mantuvo `src/db.py` como unica via de acceso a SQLite.
+- Se valido que los tests no usen `src/database.sqlite`.
+
+## Endpoints creados o modificados
+
+No se crearon endpoints nuevos.
+
+Se probo el endpoint existente:
+
+- `POST /api/policies/<id>/renew`
+
+Tambien se uso el endpoint existente:
+
+- `GET /api/dashboard`
+
+## Formato de request
+
+Para renovacion:
+
+```json
+{
+  "expiration_date": "2027-06-02"
+}
+```
+
+## Formato de response
+
+Los tests validan que la renovacion responda:
+
+```json
+{
+  "policy": {
+    "id": 3,
+    "expiration_date": "2027-06-02",
+    "renewal_status": "renewed",
+    "priority": "renovada"
+  }
+}
+```
+
+## Cambios en base de datos
+
+- No se modifico `schema.sql`.
+- Los tests crean una base SQLite temporal por prueba usando `db.initialize_database(..., with_seed=True)`.
+- La renovacion se verifica tambien consultando SQLite mediante `db.fetch_one`.
+
+## Decisiones tomadas
+
+- Los tests usan bases temporales bajo `tmp_path` para no tocar `src/database.sqlite`.
+- `create_app()` acepta `database_path` opcional para separar entorno real y entorno de pruebas.
+- La clasificacion se prueba mediante `GET /api/dashboard`, no llamando directamente funciones internas, para validar comportamiento real del backend.
+- La renovacion se prueba mediante `POST /api/policies/3/renew` y luego se confirma la persistencia en SQLite.
+
+## Riesgos identificados
+
+- Pytest puede intentar crear `.pytest_cache`; en este entorno genero un warning de permisos, sin fallar los tests.
+
+## Pendientes para Frontend
+
+- Ninguno. No hay cambios de contrato HTTP.
+- El frontend debe seguir consumiendo `priority` desde backend.
+
+## Pendientes generales
+
+- Correr los tests con:
+
+```powershell
+py -m pytest tests/test_renewals.py -q -p no:cacheprovider
+```
+
+- Completar documentacion de pruebas manuales en Postman.

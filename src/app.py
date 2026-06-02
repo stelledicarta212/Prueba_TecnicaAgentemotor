@@ -1,4 +1,5 @@
 from datetime import date, datetime
+import os
 
 from flask import Flask, jsonify, request
 
@@ -8,9 +9,13 @@ import db
 VALID_CONTACT_CHANNELS = {"call", "email", "message"}
 
 
-def create_app():
+def create_app(database_path=None):
     app = Flask(__name__)
-    db.initialize_schema()
+    database_path = database_path or os.environ.get(
+        "AGENTEMOTOR_DATABASE_PATH",
+        db.DATABASE_PATH,
+    )
+    db.initialize_schema(database_path)
 
     @app.get("/api/dashboard")
     def get_dashboard():
@@ -34,7 +39,8 @@ def create_app():
             JOIN clients ON clients.id = policies.client_id
             JOIN advisors ON advisors.id = clients.advisor_id
             ORDER BY date(policies.expiration_date) ASC, policies.id ASC
-            """
+            """,
+            db_path=database_path,
         )
 
         dashboard_policies = [build_policy_response(policy) for policy in policies]
@@ -63,6 +69,7 @@ def create_app():
             WHERE policies.id = ?
             """,
             (payload["policy_id"],),
+            db_path=database_path,
         )
         if policy is None:
             return jsonify({"error": "Policy not found"}), 404
@@ -94,6 +101,7 @@ def create_app():
                     payload.get("notes"),
                     attempted_at,
                 ),
+                db_path=database_path,
             )
         else:
             result = db.execute_query(
@@ -116,11 +124,13 @@ def create_app():
                     payload["result"],
                     payload.get("notes"),
                 ),
+                db_path=database_path,
             )
 
         contact_attempt = db.fetch_one(
             "SELECT * FROM contact_attempts WHERE id = ?",
             (result["lastrowid"],),
+            db_path=database_path,
         )
         return jsonify({"contact_attempt": contact_attempt}), 201
 
@@ -133,7 +143,11 @@ def create_app():
         if not is_valid_date(new_expiration_date):
             return jsonify({"error": "expiration_date must be a valid ISO date"}), 400
 
-        policy = db.fetch_one("SELECT id FROM policies WHERE id = ?", (policy_id,))
+        policy = db.fetch_one(
+            "SELECT id FROM policies WHERE id = ?",
+            (policy_id,),
+            db_path=database_path,
+        )
         if policy is None:
             return jsonify({"error": "Policy not found"}), 404
 
@@ -148,6 +162,7 @@ def create_app():
             WHERE id = ?
             """,
             (new_expiration_date, policy_id),
+            db_path=database_path,
         )
 
         renewed_policy = db.fetch_one(
@@ -172,6 +187,7 @@ def create_app():
             WHERE policies.id = ?
             """,
             (policy_id,),
+            db_path=database_path,
         )
         return jsonify({"policy": build_policy_response(renewed_policy)})
 
