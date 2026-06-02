@@ -544,6 +544,161 @@ py -m pytest tests/test_renewals.py -q -p no:cacheprovider
 
 ## Agente responsable
 
+Backend - Codex CLI
+
+## Objetivo
+
+Implementar CRUD profesional minimo para crear, editar y archivar polizas desde la API, conservando trazabilidad y manteniendo SQLite como fuente de verdad.
+
+## Archivos modificados
+
+- `src/schema.sql`
+- `src/db.py`
+- `src/app.py`
+- `tests/test_renewals.py`
+- `ai_history/02_implementacion.md`
+
+## Cambios realizados
+
+- Se agrego `policies.archived_at TEXT NULL` al schema.
+- Se agrego indice `idx_policies_archived_at`.
+- Se ajusto `db.initialize_schema()` para agregar `archived_at` en bases SQLite existentes que aun no tengan la columna.
+- Se agrego `db.execute_transaction()` como helper reutilizable para escrituras atomicas.
+- Se implemento `POST /api/policies` para crear cliente + poliza.
+- Se implemento `PUT /api/policies/<id>` para editar datos del cliente y de la poliza.
+- Se implemento `PATCH /api/policies/<id>/archive` para archivar sin borrar fisicamente.
+- Se ajusto `GET /api/dashboard` para excluir polizas archivadas de la gestion activa.
+- Se agrego `archived_at` a la estructura de respuesta de polizas.
+- Se agregaron tests para crear, editar y archivar polizas.
+
+## Endpoints creados o modificados
+
+- `POST /api/policies`: crea cliente y poliza asociados al asesor MVP `advisor_id = 1`.
+- `PUT /api/policies/<id>`: actualiza datos editables de cliente y poliza.
+- `PATCH /api/policies/<id>/archive`: marca una poliza como archivada con `archived_at`.
+- `GET /api/dashboard`: ahora solo devuelve polizas con `archived_at IS NULL`.
+
+## Formato de request
+
+`POST /api/policies`
+
+```json
+{
+  "client": {
+    "full_name": "Natalia Pineda",
+    "document_number": "CC-20020009",
+    "email": "natalia.pineda@example.com",
+    "phone": "+57 310 200 0009"
+  },
+  "policy": {
+    "policy_number": "POL-AUTO-0009",
+    "insurance_type": "Auto",
+    "insurer": "Seguros Andina",
+    "expiration_date": "2027-06-02"
+  }
+}
+```
+
+`PUT /api/policies/<id>`
+
+```json
+{
+  "client": {
+    "full_name": "Carlos Ramirez Actualizado",
+    "email": "carlos.actualizado@example.com"
+  },
+  "policy": {
+    "policy_number": "POL-AUTO-0001-EDIT",
+    "insurance_type": "Auto Premium",
+    "insurer": "Seguros Andina Plus",
+    "expiration_date": "2027-07-15"
+  }
+}
+```
+
+`PATCH /api/policies/<id>/archive`
+
+No requiere body.
+
+## Formato de response
+
+Los tres endpoints devuelven la poliza con la misma estructura base de `GET /api/dashboard`:
+
+```json
+{
+  "policy": {
+    "id": 1,
+    "policy_number": "POL-AUTO-0001",
+    "insurance_type": "Auto",
+    "insurer": "Seguros Andina",
+    "expiration_date": "2027-06-02",
+    "renewal_status": "pending",
+    "renewed_at": null,
+    "archived_at": null,
+    "priority": "sin_prioridad",
+    "client": {
+      "id": 1,
+      "full_name": "Carlos Ramirez",
+      "email": "carlos.ramirez@example.com",
+      "phone": "+57 310 100 0001"
+    },
+    "advisor": {
+      "id": 1,
+      "name": "Maria Gonzalez"
+    },
+    "contact_attempts": []
+  }
+}
+```
+
+Al archivar, `archived_at` vuelve informado y la poliza deja de aparecer en `GET /api/dashboard`.
+
+## Cambios en base de datos
+
+- Nueva columna: `policies.archived_at TEXT NULL`.
+- Las polizas archivadas se conservan fisicamente para mantener trazabilidad.
+- No se implemento `DELETE` fisico.
+- `POST /api/policies` crea cliente y poliza dentro de una unica transaccion.
+- `db.initialize_schema()` mantiene compatibilidad con bases existentes agregando `archived_at` si falta.
+
+## Decisiones tomadas
+
+- Se usa `advisor_id = 1` como asesor por defecto para el MVP.
+- El dashboard principal representa gestion activa, por eso filtra `archived_at IS NULL`.
+- Archivar es idempotente: si una poliza ya tiene `archived_at`, no se reemplaza.
+- Las respuestas de creacion, edicion y archivo reutilizan `build_policy_response` para conservar contrato consistente con dashboard.
+- La API valida fechas ISO `YYYY-MM-DD` antes de escribir en SQLite.
+- No se implemento autenticacion ni roles.
+
+## Riesgos identificados
+
+- La creacion depende de que exista el asesor MVP con `id = 1`; el seed actual lo crea.
+- `PUT /api/policies/<id>` permite edicion parcial de bloques `client` y `policy`, aunque semantica PUT suele ser de reemplazo completo.
+
+## Pendientes para Frontend
+
+- Consumir `POST /api/policies` para crear cliente + poliza.
+- Consumir `PUT /api/policies/<id>` para edicion.
+- Consumir `PATCH /api/policies/<id>/archive` para archivar sin borrar.
+- Ocultar o separar polizas archivadas, ya que no aparecen en el dashboard activo.
+- Mantener prioridad calculada por backend.
+
+## Pendientes generales
+
+- Documentar estos endpoints en Postman.
+- Evaluar vista secundaria de historial/archivo si se requiere consultar polizas archivadas.
+- Correr tests con:
+
+```powershell
+py -m pytest tests/test_renewals.py -q -p no:cacheprovider
+```
+
+## Fecha
+
+2026-06-02
+
+## Agente responsable
+
 Frontend - Gemini CLI
 
 ## Objetivo
@@ -637,4 +792,3 @@ Agregar un selector de tema claro/oscuro al dashboard de renovación de pólizas
 - **Persistencia limpia**: Solo el tema visual seleccionado se almacena en el navegador (`localStorage.getItem('theme')`). El estado de negocio se sigue consultando íntegramente desde SQLite mediante la API de Flask.
 - **Iconografía adaptada**: Se utiliza el sol (`☀️`) en modo oscuro para sugerir el cambio al modo claro y la luna (`🌙`) en modo claro para sugerir el cambio al modo oscuro.
 - **Compatibilidad estética**: Los bordes y sombras de las tarjetas de prioridad, badges e historial de gestiones se adaptan automáticamente a los contrastes del fondo oscuro sin perder legibilidad.
-

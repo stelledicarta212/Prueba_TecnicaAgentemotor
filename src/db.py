@@ -39,6 +39,28 @@ def execute_script(script_path, db_path=DATABASE_PATH):
 def initialize_schema(db_path=DATABASE_PATH):
     """Create the database structure defined in schema.sql."""
     execute_script(SCHEMA_PATH, db_path)
+    ensure_policy_archive_column(db_path)
+
+
+def ensure_policy_archive_column(db_path=DATABASE_PATH):
+    """Keep existing SQLite databases compatible with the current schema."""
+    connection = get_db_connection(db_path)
+    try:
+        columns = [
+            column["name"]
+            for column in connection.execute("PRAGMA table_info(policies)").fetchall()
+        ]
+        if "archived_at" not in columns:
+            connection.execute("ALTER TABLE policies ADD COLUMN archived_at TEXT")
+        connection.execute(
+            """
+            CREATE INDEX IF NOT EXISTS idx_policies_archived_at
+                ON policies(archived_at)
+            """
+        )
+        connection.commit()
+    finally:
+        connection.close()
 
 
 def load_seed(db_path=DATABASE_PATH):
@@ -83,5 +105,27 @@ def execute_query(query, params=None, db_path=DATABASE_PATH):
             "lastrowid": cursor.lastrowid,
             "rowcount": cursor.rowcount,
         }
+    finally:
+        connection.close()
+
+
+def execute_transaction(operations, db_path=DATABASE_PATH):
+    """Run multiple write queries in one SQLite transaction."""
+    connection = get_db_connection(db_path)
+    results = []
+    try:
+        for query, params in operations:
+            cursor = connection.execute(query, params or ())
+            results.append(
+                {
+                    "lastrowid": cursor.lastrowid,
+                    "rowcount": cursor.rowcount,
+                }
+            )
+        connection.commit()
+        return results
+    except Exception:
+        connection.rollback()
+        raise
     finally:
         connection.close()

@@ -33,10 +33,12 @@ CREATE TABLE IF NOT EXISTS policies (
     renewal_status TEXT NOT NULL DEFAULT 'pending'
         CHECK (renewal_status IN ('pending', 'renewed')),
     renewed_at TEXT,
+    archived_at TEXT,
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CHECK (date(expiration_date) IS NOT NULL),
     CHECK (renewed_at IS NULL OR datetime(renewed_at) IS NOT NULL),
+    CHECK (archived_at IS NULL OR datetime(archived_at) IS NOT NULL),
     CHECK (
         (renewal_status = 'pending' AND renewed_at IS NULL)
         OR (renewal_status = 'renewed' AND renewed_at IS NOT NULL)
@@ -79,6 +81,9 @@ CREATE INDEX IF NOT EXISTS idx_policies_expiration_date
 
 CREATE INDEX IF NOT EXISTS idx_policies_renewal_status
     ON policies(renewal_status);
+
+CREATE INDEX IF NOT EXISTS idx_policies_archived_at
+    ON policies(archived_at);
 
 CREATE INDEX IF NOT EXISTS idx_contact_attempts_policy_id
     ON contact_attempts(policy_id);
