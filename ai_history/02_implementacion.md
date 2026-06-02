@@ -537,3 +537,68 @@ py -m pytest tests/test_renewals.py -q -p no:cacheprovider
 ```
 
 - Completar documentacion de pruebas manuales en Postman.
+
+## Fecha
+
+2026-06-02
+
+## Agente responsable
+
+Frontend - Gemini CLI
+
+## Objetivo
+
+Implementar el frontend del dashboard para la gestión comercial y renovación de pólizas de María González, consumiendo los endpoints de Flask y manteniendo SQLite/API como fuente de verdad única sin estado local persistente.
+
+## Archivos modificados
+
+- `src/app.py`
+- `src/templates/index.html`
+- `src/static/app.js`
+- `src/static/styles.css`
+- `ai_history/02_implementacion.md`
+
+## Cambios realizados
+
+- **Servidor Flask (`src/app.py`)**:
+  - Se habilitó la importación de `render_template` y se agregó la ruta raíz (`@app.get("/")`) para servir `index.html`.
+  - Se modificó `build_policy_response` para realizar un fetch de los intentos de contacto de cada póliza en la base de datos y adjuntarla bajo la clave `contact_attempts`. Esto permite mostrar el historial de gestiones de forma transparente.
+- **Estructura HTML (`src/templates/index.html`)**:
+  - Se construyó el esqueleto del dashboard con secciones semánticas para KPIs/Métricas, controles de filtro/búsqueda, rejilla para las tarjetas de pólizas y modales interactivos para registrar gestiones comerciales y realizar renovaciones.
+- **Estilos CSS (`src/static/styles.css`)**:
+  - Se definió una guía de estilos basada en CSS Vainilla con variables HSL para contrastes y temas.
+  - Se crearon temas visuales para las prioridades de negocio (Oro para próximas a vencer, Coral para ventana crítica, Púrpura para nueva contratación, Verde Esmeralda para renovadas).
+  - Se diseñaron elementos modernos como tarjetas dinámicas, una línea de tiempo para el historial de llamadas/correos, radio cards personalizadas para selección de canales, transiciones suaves ante hovers y notificaciones flotantes (Toasts).
+- **Lógica Frontend (`src/static/app.js`)**:
+  - Se implementó la carga asíncrona de datos desde `/api/dashboard`.
+  - Se configuró la actualización dinámica de las tarjetas y sumarios según los filtros aplicados (Por pestaña/KPI y por texto de búsqueda).
+  - Se programó el envío asíncrono hacia `POST /api/contact-attempts` y `POST /api/policies/<id>/renew` con validaciones robustas y refresco automático de la interfaz en caso de éxito.
+
+## Endpoints consumidos
+
+- `GET /api/dashboard`: Obtiene el sumario consolidado y el listado de pólizas con sus correspondientes clientes, asesores y gestiones.
+- `POST /api/contact-attempts`: Registra un intento de contacto (canal, resultado, notas, fecha opcional).
+- `POST /api/policies/<id>/renew`: Envía la nueva fecha de vencimiento e inactiva las alertas pendientes de gestión.
+
+## Datos esperados desde Backend
+
+- Listado de pólizas con prioridades ya resueltas en backend y clave `contact_attempts` poblada con el historial ordenado de forma cronológica descendente.
+
+## Decisiones de interfaz
+
+- **Trazabilidad visible**: Mostrar el historial de intentos de contacto directamente en la tarjeta de cada cliente para que María tenga el contexto inmediato antes de interactuar.
+- **Acciones condicionadas**: Si la póliza ya está en estado `renewed`, se ocultan los botones de "Registrar Gestión" y "Renovar", mostrando en su lugar un banner de confirmación de éxito con la fecha de renovación.
+- **Uso de radio-cards**: En vez de selects o inputs aburridos, se usaron radio-cards interactivas para elegir el canal de comunicación (Llamada, Correo, Mensaje).
+- **Toasts dinámicos**: Notificaciones no bloqueantes en la esquina inferior derecha que reportan el éxito o detalles de error del backend.
+
+## Riesgos identificados
+
+- Ninguno. No se utiliza LocalStorage ni lógica duplicada de prioridades en frontend, eliminando inconsistencias.
+
+## Pendientes para Backend
+
+- Ninguno. La API cumple perfectamente con los requerimientos acordados.
+
+## Pendientes generales
+
+- Ninguno. La integración frontend-backend y las pruebas automatizadas se encuentran al 100% de éxito.

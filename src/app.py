@@ -1,7 +1,7 @@
 from datetime import date, datetime
 import os
 
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, render_template
 
 import db
 
@@ -16,6 +16,10 @@ def create_app(database_path=None):
         db.DATABASE_PATH,
     )
     db.initialize_schema(database_path)
+
+    @app.get("/")
+    def index():
+        return render_template("index.html")
 
     @app.get("/api/dashboard")
     def get_dashboard():
@@ -43,7 +47,7 @@ def create_app(database_path=None):
             db_path=database_path,
         )
 
-        dashboard_policies = [build_policy_response(policy) for policy in policies]
+        dashboard_policies = [build_policy_response(policy, database_path=database_path) for policy in policies]
         return jsonify(
             {
                 "summary": build_dashboard_summary(dashboard_policies),
@@ -189,15 +193,21 @@ def create_app(database_path=None):
             (policy_id,),
             db_path=database_path,
         )
-        return jsonify({"policy": build_policy_response(renewed_policy)})
+        return jsonify({"policy": build_policy_response(renewed_policy, database_path=database_path)})
 
     return app
 
 
-def build_policy_response(policy):
+def build_policy_response(policy, database_path=None):
     priority = classify_policy(
         policy["expiration_date"],
         policy["renewal_status"],
+    )
+    db_path = database_path or db.DATABASE_PATH
+    attempts = db.fetch_all(
+        "SELECT id, channel, result, notes, attempted_at, created_at FROM contact_attempts WHERE policy_id = ? ORDER BY datetime(attempted_at) DESC",
+        (policy["id"],),
+        db_path=db_path,
     )
     return {
         "id": policy["id"],
@@ -218,6 +228,7 @@ def build_policy_response(policy):
             "id": policy["advisor_id"],
             "name": policy["advisor_name"],
         },
+        "contact_attempts": attempts,
     }
 
 

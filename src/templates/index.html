@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agentemotor - Dashboard de Renovaciones</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- CSS Estilos -->
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar / Header Layout -->
+        <header class="main-header">
+            <div class="logo-area">
+                <div class="logo-icon">⚡</div>
+                <div class="logo-text">
+                    <h1>Agentemotor</h1>
+                    <span>Gestión de Renovaciones</span>
+                </div>
+            </div>
+            <div class="user-profile">
+                <div class="avatar">MG</div>
+                <div class="user-info">
+                    <span class="user-name" id="advisor-name">María González</span>
+                    <span class="user-role">Asesora Comercial</span>
+                </div>
+            </div>
+        </header>
+
+        <main class="main-content">
+            <!-- Metrics Summary Cards -->
+            <section class="metrics-grid" aria-label="Resumen de métricas">
+                <div class="metric-card card-total" data-filter="all" onclick="filterByPriority('all')" role="button" tabindex="0">
+                    <div class="metric-icon">📁</div>
+                    <div class="metric-data">
+                        <span class="metric-value" id="stat-total">0</span>
+                        <span class="metric-label">Total Pólizas</span>
+                    </div>
+                </div>
+                <div class="metric-card card-warning" data-filter="proxima_a_vencer" onclick="filterByPriority('proxima_a_vencer')" role="button" tabindex="0">
+                    <div class="metric-icon">⏳</div>
+                    <div class="metric-data">
+                        <span class="metric-value" id="stat-proxima">0</span>
+                        <span class="metric-label">Próxima a vencer</span>
+                    </div>
+                </div>
+                <div class="metric-card card-danger" data-filter="ventana_critica" onclick="filterByPriority('ventana_critica')" role="button" tabindex="0">
+                    <div class="metric-icon">🚨</div>
+                    <div class="metric-data">
+                        <span class="metric-value" id="stat-critica">0</span>
+                        <span class="metric-label">Ventana crítica</span>
+                    </div>
+                </div>
+                <div class="metric-card card-purple" data-filter="nueva_contratacion" onclick="filterByPriority('nueva_contratacion')" role="button" tabindex="0">
+                    <div class="metric-icon">✨</div>
+                    <div class="metric-data">
+                        <span class="metric-value" id="stat-nueva">0</span>
+                        <span class="metric-label">Nueva contratación</span>
+                    </div>
+                </div>
+                <div class="metric-card card-success" data-filter="renovada" onclick="filterByPriority('renovada')" role="button" tabindex="0">
+                    <div class="metric-icon">✅</div>
+                    <div class="metric-data">
+                        <span class="metric-value" id="stat-renovada">0</span>
+                        <span class="metric-label">Renovadas</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Search and Controls Row -->
+            <section class="controls-panel">
+                <div class="search-wrapper">
+                    <span class="search-icon">🔍</span>
+                    <input type="text" id="search-input" placeholder="Buscar por cliente, póliza o aseguradora..." aria-label="Buscar pólizas">
+                </div>
+                <div class="filter-tabs">
+                    <button class="tab-btn active" id="tab-all" onclick="filterByPriority('all')">Todas</button>
+                    <button class="tab-btn" id="tab-proxima_a_vencer" onclick="filterByPriority('proxima_a_vencer')">Próximas a vencer</button>
+                    <button class="tab-btn" id="tab-ventana_critica" onclick="filterByPriority('ventana_critica')">Ventana crítica</button>
+                    <button class="tab-btn" id="tab-nueva_contratacion" onclick="filterByPriority('nueva_contratacion')">Nueva contratación</button>
+                    <button class="tab-btn" id="tab-renovada" onclick="filterByPriority('renovada')">Renovadas</button>
+                </div>
+            </section>
+
+            <!-- Loading State -->
+            <div id="loading-spinner" class="loading-state hidden">
+                <div class="spinner"></div>
+                <p>Cargando información desde SQLite...</p>
+            </div>
+
+            <!-- Error State -->
+            <div id="error-banner" class="error-banner hidden">
+                <div class="error-content">
+                    <span class="error-icon">⚠️</span>
+                    <p id="error-message">Ha ocurrido un error al conectar con la API.</p>
+                    <button class="btn btn-secondary" onclick="loadDashboard()">Reintentar</button>
+                </div>
+            </div>
+
+            <!-- Empty State -->
+            <div id="empty-state" class="empty-state hidden">
+                <div class="empty-icon">📭</div>
+                <h3>No se encontraron pólizas</h3>
+                <p>No hay registros que coincidan con la búsqueda o filtro seleccionado.</p>
+            </div>
+
+            <!-- Policies Grid -->
+            <section class="policies-grid" id="policies-container">
+                <!-- Javascript will inject cards here -->
+            </section>
+        </main>
+    </div>
+
+    <!-- Modal: Registrar Gestión -->
+    <div class="modal-backdrop hidden" id="modal-gestion">
+        <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="modal-gestion-title">
+            <div class="modal-header">
+                <h2 id="modal-gestion-title">Registrar Gestión Comercial</h2>
+                <button class="close-btn" onclick="closeModal('modal-gestion')">&times;</button>
+            </div>
+            <form id="form-gestion" onsubmit="submitGestion(event)">
+                <input type="hidden" id="gestion-policy-id">
+                
+                <div class="form-group">
+                    <label>Póliza / Cliente</label>
+                    <div class="info-read-only" id="gestion-policy-info">
+                        POL-XXXX-XXXX | Cliente
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Canal de Contacto *</label>
+                    <div class="channel-options">
+                        <label class="channel-card">
+                            <input type="radio" name="channel" value="call" required>
+                            <span class="channel-content">
+                                <span class="chan-icon">📞</span>
+                                <span class="chan-text">Llamada</span>
+                            </span>
+                        </label>
+                        <label class="channel-card">
+                            <input type="radio" name="channel" value="email">
+                            <span class="channel-content">
+                                <span class="chan-icon">✉️</span>
+                                <span class="chan-text">Correo</span>
+                            </span>
+                        </label>
+                        <label class="channel-card">
+                            <input type="radio" name="channel" value="message">
+                            <span class="channel-content">
+                                <span class="chan-icon">💬</span>
+                                <span class="chan-text">Mensaje</span>
+                            </span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="gestion-result">Resultado de la Gestión *</label>
+                    <select id="gestion-result" required class="form-select">
+                        <option value="" disabled selected>Seleccione un resultado</option>
+                        <option value="Cliente interesado - Solicita cotización">Cliente interesado - Solicita cotización</option>
+                        <option value="Llamar más tarde - Cliente ocupado">Llamar más tarde - Cliente ocupado</option>
+                        <option value="No responde - Se dejó buzón/mensaje">No responde - Se dejó buzón/mensaje</option>
+                        <option value="No interesado - Costo elevado">No interesado - Costo elevado</option>
+                        <option value="No interesado - Cambio de aseguradora">No interesado - Cambio de aseguradora</option>
+                        <option value="Comprometido a renovar">Comprometido a renovar</option>
+                        <option value="Otro resultado">Otro resultado...</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="gestion-notes">Notas / Observaciones</label>
+                    <textarea id="gestion-notes" rows="3" placeholder="Detalle de la conversación, compromisos o comentarios adicionales..." class="form-textarea"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="gestion-date">Fecha y Hora de la Gestión (Opcional)</label>
+                    <input type="datetime-local" id="gestion-date" class="form-input">
+                    <small class="form-help">Si se deja vacío, se registrará la fecha y hora actual del sistema.</small>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('modal-gestion')">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Guardar Gestión</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Renovar Póliza -->
+    <div class="modal-backdrop hidden" id="modal-renew">
+        <div class="modal-box small-modal" role="dialog" aria-modal="true" aria-labelledby="modal-renew-title">
+            <div class="modal-header">
+                <h2 id="modal-renew-title">Renovar Póliza</h2>
+                <button class="close-btn" onclick="closeModal('modal-renew')">&times;</button>
+            </div>
+            <form id="form-renew" onsubmit="submitRenew(event)">
+                <input type="hidden" id="renew-policy-id">
+                
+                <div class="form-group">
+                    <label>Póliza a Renovar</label>
+                    <div class="info-read-only" id="renew-policy-info">
+                        POL-XXXX-XXXX
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="renew-expiration-date">Nueva Fecha de Vencimiento *</label>
+                    <input type="date" id="renew-expiration-date" required class="form-input">
+                    <small class="form-help" id="renew-date-help">La nueva fecha debe ser posterior a la fecha actual para mantener vigencia.</small>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('modal-renew')">Cancelar</button>
+                    <button type="submit" class="btn btn-success">Renovar e Inactivar Gestión</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <!-- JS Aplicación -->
+    <script src="/static/app.js"></script>
+</body>
+</html>
