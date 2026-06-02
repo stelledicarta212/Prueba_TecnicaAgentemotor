@@ -140,3 +140,85 @@ No aplica. No se crearon endpoints ni contratos HTTP en esta tarea.
 - Implementar `db.py`.
 - Implementar los endpoints definidos en `spec.md`.
 - Implementar tests automatizados para clasificacion y renovacion.
+
+## Fecha
+
+2026-06-02
+
+## Agente responsable
+
+Backend - Codex CLI
+
+## Objetivo
+
+Implementar `src/db.py` como punto unico de acceso a SQLite para centralizar la interaccion con la fuente de verdad del sistema.
+
+## Archivos modificados
+
+- `src/db.py`
+- `ai_history/02_implementacion.md`
+
+## Cambios realizados
+
+- Se creo la configuracion central de rutas para `database.sqlite`, `schema.sql` y `seed.sql`.
+- Se implemento la conexion SQLite con `PRAGMA foreign_keys = ON`.
+- Se habilito un row factory que devuelve filas como diccionarios.
+- Se agregaron funciones para inicializar el schema y cargar datos seed.
+- Se agregaron funciones auxiliares reutilizables para consultas de lectura y escritura.
+- Se valido `db.py` creando una base temporal, cargando schema + seed y consultando registros.
+- Se valido la sintaxis con `py -m py_compile src/db.py`.
+
+## Endpoints creados o modificados
+
+No aplica. En esta tarea no se implemento Flask ni endpoints.
+
+## Formato de request
+
+No aplica. No se crearon endpoints ni contratos HTTP en esta tarea.
+
+## Formato de response
+
+No aplica. No se crearon endpoints ni contratos HTTP en esta tarea.
+
+## Cambios en base de datos
+
+No se modifico la estructura de base de datos.
+
+Funciones creadas en `src/db.py`:
+
+- `dict_factory(cursor, row)`: convierte filas SQLite en diccionarios.
+- `get_db_connection(db_path=DATABASE_PATH)`: abre una conexion SQLite configurada con claves foraneas y row factory.
+- `read_sql_file(path)`: lee archivos SQL desde disco.
+- `execute_script(script_path, db_path=DATABASE_PATH)`: ejecuta scripts SQL y confirma la transaccion.
+- `initialize_schema(db_path=DATABASE_PATH)`: crea la estructura definida en `schema.sql`.
+- `load_seed(db_path=DATABASE_PATH)`: carga los datos de prueba definidos en `seed.sql`.
+- `initialize_database(db_path=DATABASE_PATH, with_seed=False)`: inicializa schema y opcionalmente seed.
+- `fetch_one(query, params=None, db_path=DATABASE_PATH)`: ejecuta una consulta de lectura y devuelve un diccionario o `None`.
+- `fetch_all(query, params=None, db_path=DATABASE_PATH)`: ejecuta una consulta de lectura y devuelve una lista de diccionarios.
+- `execute_query(query, params=None, db_path=DATABASE_PATH)`: ejecuta una escritura y devuelve `lastrowid` y `rowcount`.
+
+## Decisiones tomadas
+
+- Se mantuvo `src/db.py` sin dependencias de Flask para que pueda reutilizarse desde endpoints y tests.
+- Se uso `src/database.sqlite` como ruta por defecto de la base persistida local.
+- Todas las conexiones habilitan claves foraneas para respetar las relaciones definidas en `schema.sql`.
+- Las funciones aceptan `db_path` opcional para facilitar pruebas con bases temporales sin tocar la base real.
+- Los helpers devuelven diccionarios para que la API pueda construir respuestas sin depender de objetos internos de SQLite.
+
+## Riesgos identificados
+
+- `load_seed()` borra datos existentes porque ejecuta `seed.sql`; debe usarse solo para desarrollo o pruebas.
+- Aun no existe capa Flask ni endpoints, por lo que ningun flujo HTTP consume `db.py` todavia.
+
+## Pendientes para Frontend
+
+- No hay cambios de contrato HTTP para consumir todavia.
+- Esperar a que Backend implemente `GET /api/dashboard` usando `db.py` como fuente unica de datos.
+- Mantener el frontend sin estado critico propio; toda informacion operativa debe venir de la API cuando exista.
+
+## Pendientes generales
+
+- Implementar `GET /api/dashboard`.
+- Implementar `POST /api/contact-attempts`.
+- Implementar `POST /api/policies/{id}/renew`.
+- Implementar tests automatizados de clasificacion y renovacion.
