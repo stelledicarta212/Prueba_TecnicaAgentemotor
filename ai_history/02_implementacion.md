@@ -386,3 +386,58 @@ Cada poliza incluye:
 
 - Implementar tests automatizados para clasificacion y renovacion.
 - Documentar pruebas manuales en Postman.
+
+## Fecha
+
+2026-06-02
+
+## Agente responsable
+
+Backend - Codex CLI
+
+## Objetivo
+
+Ajustar la ejecucion local de Flask para que la aplicacion no quede en modo debug en la entrega final.
+
+## Archivos modificados
+
+- `src/app.py`
+- `ai_history/02_implementacion.md`
+
+## Cambios realizados
+
+- Se cambio `app.run(debug=True)` por `app.run(debug=False)`.
+- No se modificaron endpoints ni logica de negocio.
+
+## Endpoints creados o modificados
+
+No aplica. No se crearon ni modificaron endpoints.
+
+## Formato de request
+
+No aplica. No hubo cambios de contrato HTTP.
+
+## Formato de response
+
+No aplica. No hubo cambios de contrato HTTP.
+
+## Cambios en base de datos
+
+No aplica. No hubo cambios en SQLite.
+
+## Decisiones tomadas
+
+- Se desactivo debug en la ejecucion directa de `src/app.py` para evitar comportamiento de desarrollo en la entrega final.
+- Se mantuvo intacta la configuracion de endpoints existente.
+
+## Riesgos identificados
+
+- Ninguno identificado para este ajuste puntual.
+
+## Pendientes para Frontend
+
+- Ninguno. No hay cambios en contratos ni respuestas.
+
+## Pendientes generales
+
+- Mantener validaciones finales antes de la entrega.
