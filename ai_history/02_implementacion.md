@@ -699,6 +699,74 @@ py -m pytest tests/test_renewals.py -q -p no:cacheprovider
 
 ## Agente responsable
 
+Backend - Codex CLI
+
+## Objetivo
+
+Corregir `POST /api/policies` para que la creacion de cliente + poliza no dependa de que exista `advisor_id = 1` en SQLite.
+
+## Archivos modificados
+
+- `src/app.py`
+- `tests/test_renewals.py`
+- `ai_history/02_implementacion.md`
+
+## Cambios realizados
+
+- Se reemplazo el uso fijo de `advisor_id = 1` por busqueda del primer asesor disponible en SQLite.
+- Si no existe ningun asesor, se crea automaticamente el asesor demo Maria Gonzalez en SQLite.
+- La creacion de cliente + poliza sigue ejecutandose dentro de una transaccion.
+- Se agrego un test para validar `POST /api/policies` cuando la base no tiene asesores.
+
+## Endpoints creados o modificados
+
+- `POST /api/policies`: ahora resuelve dinamicamente el asesor real desde SQLite antes de crear el cliente.
+
+## Formato de request
+
+Sin cambios.
+
+## Formato de response
+
+Sin cambios. La respuesta sigue devolviendo `policy` con estructura compatible con `GET /api/dashboard`.
+
+## Cambios en base de datos
+
+- No se modifico `schema.sql`.
+- Si no existe ningun asesor, `POST /api/policies` inserta:
+  - `name`: `Maria Gonzalez`
+  - `email`: `maria.gonzalez@agentemotor.test`
+  - `phone`: `+57 300 111 2233`
+
+## Decisiones tomadas
+
+- No se guarda ningun dato fuera de SQLite.
+- Se conserva SQLite como fuente de verdad para decidir que asesor usar.
+- Se prioriza el primer asesor disponible por `ORDER BY id ASC LIMIT 1`.
+- Solo se crea el asesor demo si la tabla `advisors` esta vacia.
+
+## Riesgos identificados
+
+- En una version multiusuario futura sera necesario asignar asesor segun sesion o autenticacion, no por primer asesor disponible.
+
+## Pendientes para Frontend
+
+- Ninguno. No cambia el contrato del formulario Crear Cliente + Poliza.
+
+## Pendientes generales
+
+- Correr tests con:
+
+```powershell
+py -m pytest tests/test_renewals.py -q -p no:cacheprovider
+```
+
+## Fecha
+
+2026-06-02
+
+## Agente responsable
+
 Frontend - Gemini CLI
 
 ## Objetivo
@@ -843,4 +911,3 @@ Implementar las funcionalidades de creación, edición y archivado de pólizas y
 - **Botones en cabecera**: Los botones de edición y archivado se colocaron inline en el header de cada tarjeta para evitar el abarrotamiento de botones en las acciones inferiores. Su opacidad baja a 40% por defecto y sube a 100% al pasar el cursor, brindando una experiencia más limpia y fluida.
 - **Formularios en Grid**: Debido a la cantidad de campos para crear/editar (8 campos en total), los formularios se organizaron en dos columnas laterales (Cliente a la izquierda, Póliza a la derecha), con un comportamiento auto-apilable en dispositivos móviles.
 - **Refresco síncrono**: Cada operación exitosa en la API refresca inmediatamente el listado consumiendo `/api/dashboard`, previniendo inconsistencias de estado.
-

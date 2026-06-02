@@ -7,7 +7,11 @@ import db
 
 
 VALID_CONTACT_CHANNELS = {"call", "email", "message"}
-DEFAULT_ADVISOR_ID = 1
+DEMO_ADVISOR = {
+    "name": "Maria Gonzalez",
+    "email": "maria.gonzalez@agentemotor.test",
+    "phone": "+57 300 111 2233",
+}
 
 
 def create_app(database_path=None):
@@ -149,14 +153,7 @@ def create_app(database_path=None):
         if error:
             return jsonify({"error": error}), 400
 
-        advisor = db.fetch_one(
-            "SELECT id FROM advisors WHERE id = ?",
-            (DEFAULT_ADVISOR_ID,),
-            db_path=database_path,
-        )
-        if advisor is None:
-            return jsonify({"error": "Default advisor not found"}), 400
-
+        advisor = get_or_create_advisor(database_path)
         client_payload = payload["client"]
         policy_payload = payload["policy"]
 
@@ -182,7 +179,7 @@ def create_app(database_path=None):
                     VALUES (?, ?, ?, ?, ?)
                     """,
                     (
-                        DEFAULT_ADVISOR_ID,
+                        advisor["id"],
                         client_payload["full_name"],
                         client_payload.get("document_number"),
                         client_payload.get("email"),
@@ -444,6 +441,33 @@ def get_policy_response(policy_id, database_path):
     if policy is None:
         return None
     return build_policy_response(policy, database_path=database_path)
+
+
+def get_or_create_advisor(database_path):
+    advisor = db.fetch_one(
+        "SELECT id, name FROM advisors ORDER BY id ASC LIMIT 1",
+        db_path=database_path,
+    )
+    if advisor is not None:
+        return advisor
+
+    result = db.execute_query(
+        """
+        INSERT INTO advisors (name, email, phone)
+        VALUES (?, ?, ?)
+        """,
+        (
+            DEMO_ADVISOR["name"],
+            DEMO_ADVISOR["email"],
+            DEMO_ADVISOR["phone"],
+        ),
+        db_path=database_path,
+    )
+    return db.fetch_one(
+        "SELECT id, name FROM advisors WHERE id = ?",
+        (result["lastrowid"],),
+        db_path=database_path,
+    )
 
 
 def classify_policy(expiration_date, renewal_status):

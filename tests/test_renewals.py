@@ -24,6 +24,14 @@ def create_test_client(tmp_path):
     return app.test_client(), database_path
 
 
+def create_empty_test_client(tmp_path):
+    database_path = tmp_path / "empty.sqlite"
+    db.initialize_schema(database_path)
+    app = create_app(database_path=database_path)
+    app.config["TESTING"] = True
+    return app.test_client(), database_path
+
+
 def find_policy_by_number(response_json, policy_number):
     return next(
         policy
@@ -126,6 +134,56 @@ def test_create_policy_creates_client_and_policy(tmp_path):
     assert stored_policy["insurance_type"] == "Auto"
     assert stored_policy["archived_at"] is None
     assert stored_policy["client_name"] == "Natalia Pineda"
+
+
+def test_create_policy_creates_demo_advisor_when_no_advisor_exists(tmp_path):
+    client, database_path = create_empty_test_client(tmp_path)
+
+    response = client.post(
+        "/api/policies",
+        json={
+            "client": {
+                "full_name": "Camila Suarez",
+                "document_number": "CC-30030010",
+                "email": "camila.suarez@example.com",
+                "phone": "+57 310 300 0010",
+            },
+            "policy": {
+                "policy_number": "POL-VIDA-0010",
+                "insurance_type": "Vida",
+                "insurer": "Vida Plena",
+                "expiration_date": "2027-08-01",
+            },
+        },
+    )
+
+    assert response.status_code == 201
+    policy = response.get_json()["policy"]
+    assert policy["policy_number"] == "POL-VIDA-0010"
+    assert policy["advisor"]["name"] == "Maria Gonzalez"
+
+    advisor = db.fetch_one(
+        "SELECT id, name, email, phone FROM advisors ORDER BY id ASC LIMIT 1",
+        db_path=database_path,
+    )
+    assert advisor["name"] == "Maria Gonzalez"
+    assert advisor["email"] == "maria.gonzalez@agentemotor.test"
+    assert advisor["phone"] == "+57 300 111 2233"
+
+    stored_policy = db.fetch_one(
+        """
+        SELECT
+            policies.policy_number,
+            clients.advisor_id
+        FROM policies
+        JOIN clients ON clients.id = policies.client_id
+        WHERE policies.id = ?
+        """,
+        (policy["id"],),
+        db_path=database_path,
+    )
+    assert stored_policy["policy_number"] == "POL-VIDA-0010"
+    assert stored_policy["advisor_id"] == advisor["id"]
 
 
 def test_update_policy_updates_client_and_policy(tmp_path):
