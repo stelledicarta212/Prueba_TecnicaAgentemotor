@@ -186,6 +186,76 @@ def test_create_policy_creates_demo_advisor_when_no_advisor_exists(tmp_path):
     assert stored_policy["advisor_id"] == advisor["id"]
 
 
+def test_create_policy_returns_json_error_for_duplicate_document_number(tmp_path):
+    client, database_path = create_test_client(tmp_path)
+
+    response = client.post(
+        "/api/policies",
+        json={
+            "client": {
+                "full_name": "Cliente Duplicado",
+                "document_number": "CC-10010001",
+                "email": "duplicado@example.com",
+                "phone": "+57 310 999 0001",
+            },
+            "policy": {
+                "policy_number": "POL-NUEVA-0101",
+                "insurance_type": "Vida",
+                "insurer": "Vida Plena",
+                "expiration_date": "2027-08-01",
+            },
+        },
+    )
+
+    assert response.status_code == 400
+    assert response.is_json
+    assert response.get_json() == {
+        "error": "Ya existe un cliente con ese documento."
+    }
+
+    counts = db.fetch_one(
+        "SELECT count(1) AS total_clients, (SELECT count(1) FROM policies) AS total_policies FROM clients",
+        db_path=database_path,
+    )
+    assert counts["total_clients"] == 8
+    assert counts["total_policies"] == 8
+
+
+def test_create_policy_returns_json_error_for_duplicate_policy_number(tmp_path):
+    client, database_path = create_test_client(tmp_path)
+
+    response = client.post(
+        "/api/policies",
+        json={
+            "client": {
+                "full_name": "Nuevo Cliente",
+                "document_number": "CC-40040011",
+                "email": "nuevo@example.com",
+                "phone": "+57 310 400 0011",
+            },
+            "policy": {
+                "policy_number": "POL-AUTO-0001",
+                "insurance_type": "Auto",
+                "insurer": "Seguros Andina",
+                "expiration_date": "2027-09-10",
+            },
+        },
+    )
+
+    assert response.status_code == 400
+    assert response.is_json
+    assert response.get_json() == {
+        "error": "Ya existe una póliza con ese número."
+    }
+
+    counts = db.fetch_one(
+        "SELECT count(1) AS total_clients, (SELECT count(1) FROM policies) AS total_policies FROM clients",
+        db_path=database_path,
+    )
+    assert counts["total_clients"] == 8
+    assert counts["total_policies"] == 8
+
+
 def test_update_policy_updates_client_and_policy(tmp_path):
     client, database_path = create_test_client(tmp_path)
 

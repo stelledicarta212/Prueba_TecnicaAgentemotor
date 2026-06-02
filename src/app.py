@@ -1,5 +1,6 @@
 from datetime import date, datetime
 import os
+import sqlite3
 
 from flask import Flask, jsonify, request, render_template
 
@@ -157,56 +158,51 @@ def create_app(database_path=None):
         client_payload = payload["client"]
         policy_payload = payload["policy"]
 
-        existing_policy = db.fetch_one(
-            "SELECT id FROM policies WHERE policy_number = ?",
-            (policy_payload["policy_number"],),
-            db_path=database_path,
-        )
-        if existing_policy is not None:
-            return jsonify({"error": "policy_number already exists"}), 400
-
-        transaction_results = db.execute_transaction(
-            [
-                (
-                    """
-                    INSERT INTO clients (
-                        advisor_id,
-                        full_name,
-                        document_number,
-                        email,
-                        phone
-                    )
-                    VALUES (?, ?, ?, ?, ?)
-                    """,
+        try:
+            transaction_results = db.execute_transaction(
+                [
                     (
-                        advisor["id"],
-                        client_payload["full_name"],
-                        client_payload.get("document_number"),
-                        client_payload.get("email"),
-                        client_payload.get("phone"),
+                        """
+                        INSERT INTO clients (
+                            advisor_id,
+                            full_name,
+                            document_number,
+                            email,
+                            phone
+                        )
+                        VALUES (?, ?, ?, ?, ?)
+                        """,
+                        (
+                            advisor["id"],
+                            client_payload["full_name"],
+                            client_payload.get("document_number"),
+                            client_payload.get("email"),
+                            client_payload.get("phone"),
+                        ),
                     ),
-                ),
-                (
-                    """
-                    INSERT INTO policies (
-                        client_id,
-                        policy_number,
-                        insurance_type,
-                        insurer,
-                        expiration_date
-                    )
-                    VALUES (last_insert_rowid(), ?, ?, ?, ?)
-                    """,
                     (
-                        policy_payload["policy_number"],
-                        policy_payload["insurance_type"],
-                        policy_payload.get("insurer"),
-                        policy_payload["expiration_date"],
+                        """
+                        INSERT INTO policies (
+                            client_id,
+                            policy_number,
+                            insurance_type,
+                            insurer,
+                            expiration_date
+                        )
+                        VALUES (last_insert_rowid(), ?, ?, ?, ?)
+                        """,
+                        (
+                            policy_payload["policy_number"],
+                            policy_payload["insurance_type"],
+                            policy_payload.get("insurer"),
+                            policy_payload["expiration_date"],
+                        ),
                     ),
-                ),
-            ],
-            db_path=database_path,
-        )
+                ],
+                db_path=database_path,
+            )
+        except sqlite3.IntegrityError as error:
+            return handle_policy_creation_integrity_error(error)
 
         created_policy = get_policy_response(
             transaction_results[-1]["lastrowid"],
@@ -468,6 +464,15 @@ def get_or_create_advisor(database_path):
         (result["lastrowid"],),
         db_path=database_path,
     )
+
+
+def handle_policy_creation_integrity_error(error):
+    message = str(error)
+    if "clients.document_number" in message:
+        return jsonify({"error": "Ya existe un cliente con ese documento."}), 400
+    if "policies.policy_number" in message:
+        return jsonify({"error": "Ya existe una póliza con ese número."}), 400
+    return jsonify({"error": "No se pudo crear la póliza."}), 400
 
 
 def classify_policy(expiration_date, renewal_status):

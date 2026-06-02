@@ -767,6 +767,84 @@ py -m pytest tests/test_renewals.py -q -p no:cacheprovider
 
 ## Agente responsable
 
+Backend - Codex CLI
+
+## Objetivo
+
+Corregir `POST /api/policies` para manejar correctamente errores de unicidad y devolver siempre JSON al frontend.
+
+## Archivos modificados
+
+- `src/app.py`
+- `tests/test_renewals.py`
+- `ai_history/02_implementacion.md`
+
+## Cambios realizados
+
+- Se agrego captura explicita de `sqlite3.IntegrityError` dentro de `create_policy()`.
+- Se mapearon errores de unicidad de `clients.document_number` a respuesta `400` con mensaje en espanol.
+- Se mapearon errores de unicidad de `policies.policy_number` a respuesta `400` con mensaje en espanol.
+- Se elimino la dependencia del precheck de `policy_number` para que la transaccion y SQLite sean la fuente de verdad de la validacion final.
+- Se agregaron dos tests para documento duplicado y numero de poliza duplicado.
+
+## Endpoints creados o modificados
+
+- `POST /api/policies`: ahora devuelve errores JSON controlados para duplicados de documento y numero de poliza.
+
+## Formato de request
+
+Sin cambios.
+
+## Formato de response
+
+Documento duplicado:
+
+```json
+{
+  "error": "Ya existe un cliente con ese documento."
+}
+```
+
+Numero de poliza duplicado:
+
+```json
+{
+  "error": "Ya existe una póliza con ese número."
+}
+```
+
+## Cambios en base de datos
+
+No se modifico el schema. La unicidad sigue siendo validada por SQLite mediante constraints reales.
+
+## Decisiones tomadas
+
+- Se mantiene SQLite como fuente de verdad para detectar duplicados.
+- El endpoint captura `sqlite3.IntegrityError` solo al crear cliente + poliza dentro de la transaccion.
+- Incluso en errores inesperados de integridad, la API devuelve JSON y no HTML.
+
+## Riesgos identificados
+
+- Otros endpoints distintos de `POST /api/policies` todavia no tienen manejo especifico de `IntegrityError` porque este bug reportado era puntual de creacion.
+
+## Pendientes para Frontend
+
+- Ninguno. El frontend ya puede mostrar el mensaje devuelto por `error` sin encontrarse HTML.
+
+## Pendientes generales
+
+- Correr tests con:
+
+```powershell
+py -m pytest tests/test_renewals.py -q -p no:cacheprovider
+```
+
+## Fecha
+
+2026-06-02
+
+## Agente responsable
+
 Frontend - Gemini CLI
 
 ## Objetivo
