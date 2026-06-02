@@ -599,6 +599,42 @@ Implementar el frontend del dashboard para la gestión comercial y renovación d
 
 - Ninguno. La API cumple perfectamente con los requerimientos acordados.
 
-## Pendientes generales
-
 - Ninguno. La integración frontend-backend y las pruebas automatizadas se encuentran al 100% de éxito.
+
+## Fecha
+
+2026-06-02
+
+## Agente responsable
+
+Frontend - Gemini CLI
+
+## Objetivo
+
+Agregar un selector de tema claro/oscuro al dashboard de renovación de pólizas, guardando únicamente la preferencia del tema en LocalStorage sin tocar información del negocio ni modificar la lógica de negocio/API.
+
+## Archivos modificados
+
+- `src/templates/index.html`
+- `src/static/app.js`
+- `src/static/styles.css`
+- `ai_history/02_implementacion.md`
+
+## Cambios realizados
+
+- **Estructura HTML (`src/templates/index.html`)**:
+  - Se agregó un botón `#theme-toggle` con el identificador de icono `#theme-icon` dentro de un nuevo contenedor `.header-actions` en el encabezado principal, ubicado junto al perfil de usuario.
+- **Lógica de Temas (`src/static/app.js`)**:
+  - Al iniciar la aplicación (evento `DOMContentLoaded`), se consulta la clave `theme` en `localStorage`. Si está guardado como `'dark'`, se aplica la clase `dark-theme` al `body` y se establece el emoticón de sol (`☀️`).
+  - Se añadió un escuchador de eventos de clic al botón `#theme-toggle` para alternar la clase `dark-theme`, cambiar el icono (`☀️` para modo oscuro, `🌙` para modo claro) y persistir el estado resultante (`'dark'` o `'light'`) en `localStorage`.
+- **Estilos CSS (`src/static/styles.css`)**:
+  - Se agregaron las variables CSS del modo oscuro asociadas al selector `body.dark-theme` (`--bg-app`, `--bg-card`, `--text-primary`, `--text-secondary`, `--text-tertiary`, `--border-color`, `--border-hover`, y las variantes translúcidas de los colores de prioridad).
+  - Se definieron los estilos para `.header-actions` y el botón circular `.theme-toggle-btn` con transiciones fluidas de escala y color de fondo.
+  - Se actualizaron los estilos que tenían valores estáticos de color de fondo (`white`, `#f8fafc`, `#f1f5f9`) por las variables de color correspondientes (`var(--bg-app)`, `var(--bg-card)`) en buscadores, entradas, áreas de texto, canal de contacto y banners, logrando una transición uniforme y completa de temas.
+
+## Decisiones de interfaz
+
+- **Persistencia limpia**: Solo el tema visual seleccionado se almacena en el navegador (`localStorage.getItem('theme')`). El estado de negocio se sigue consultando íntegramente desde SQLite mediante la API de Flask.
+- **Iconografía adaptada**: Se utiliza el sol (`☀️`) en modo oscuro para sugerir el cambio al modo claro y la luna (`🌙`) en modo claro para sugerir el cambio al modo oscuro.
+- **Compatibilidad estética**: Los bordes y sombras de las tarjetas de prioridad, badges e historial de gestiones se adaptan automáticamente a los contrastes del fondo oscuro sin perder legibilidad.
+

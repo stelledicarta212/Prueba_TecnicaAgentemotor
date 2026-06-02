@@ -21,6 +21,30 @@ const statRenovada = document.getElementById('stat-renovada');
 
 // Initialize Application
 document.addEventListener('DOMContentLoaded', () => {
+    // Theme initialization
+    const savedTheme = localStorage.getItem('theme');
+    const themeIcon = document.getElementById('theme-icon');
+    const themeToggle = document.getElementById('theme-toggle');
+
+    if (savedTheme === 'dark') {
+        document.body.classList.add('dark-theme');
+        if (themeIcon) themeIcon.textContent = '☀️';
+    } else {
+        document.body.classList.remove('dark-theme');
+        if (themeIcon) themeIcon.textContent = '🌙';
+    }
+
+    if (themeToggle) {
+        themeToggle.addEventListener('click', () => {
+            document.body.classList.toggle('dark-theme');
+            const isDark = document.body.classList.contains('dark-theme');
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+            if (themeIcon) {
+                themeIcon.textContent = isDark ? '☀️' : '🌙';
+            }
+        });
+    }
+
     // Search input listener with basic event handling
     searchInput.addEventListener('input', (e) => {
         searchQuery = e.target.value.toLowerCase().trim();
