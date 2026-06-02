@@ -68,3 +68,75 @@ No aplica. No se crearon endpoints ni contratos HTTP en esta tarea.
 - Implementar `db.py`.
 - Implementar los endpoints definidos en `spec.md`.
 - Implementar tests de clasificacion y renovacion.
+
+## Fecha
+
+2026-06-02
+
+## Agente responsable
+
+Backend - Codex CLI
+
+## Objetivo
+
+Implementar `src/seed.sql` con datos de prueba realistas que permitan validar todas las reglas de negocio de clasificacion de polizas y renovaciones.
+
+## Archivos modificados
+
+- `src/seed.sql`
+- `ai_history/02_implementacion.md`
+
+## Cambios realizados
+
+- Se creo un seed idempotente para poblar la base SQLite desde cero.
+- Se inserto 1 asesor de prueba.
+- Se insertaron 8 clientes asociados al asesor.
+- Se insertaron 8 polizas, una por cliente.
+- Se distribuyeron las polizas en cuatro grupos operativos: proxima a vencer, ventana critica, nueva contratacion y renovada.
+- Se validaron los datos cargando `src/schema.sql` y `src/seed.sql` en SQLite en memoria.
+
+## Endpoints creados o modificados
+
+No aplica. En esta tarea no se implemento codigo Flask ni endpoints.
+
+## Formato de request
+
+No aplica. No se crearon endpoints ni contratos HTTP en esta tarea.
+
+## Formato de response
+
+No aplica. No se crearon endpoints ni contratos HTTP en esta tarea.
+
+## Cambios en base de datos
+
+- `advisors`: 1 registro de prueba para Maria Gonzalez.
+- `clients`: 8 clientes realistas asociados al asesor.
+- `policies`: 8 polizas con fechas relativas a `date('now')`.
+- Distribucion de polizas:
+  - 2 proximas a vencer: vencen dentro de los proximos 30 dias.
+  - 2 en ventana critica: vencieron entre 1 y 30 dias atras.
+  - 2 como nueva contratacion: vencieron hace mas de 30 dias.
+  - 2 renovadas: tienen `renewal_status = 'renewed'` y `renewed_at` informado.
+
+## Decisiones tomadas
+
+- Se usaron fechas relativas de SQLite para que el seed siga siendo util sin importar el dia de ejecucion.
+- Se mantuvo una poliza por cliente para facilitar pruebas manuales y lectura del dashboard.
+- No se insertaron `contact_attempts` porque la tarea pidio especificamente asesor, clientes y polizas.
+- Las polizas renovadas usan fecha de vencimiento futura y `renewed_at` no nulo para cumplir las restricciones del schema.
+
+## Riesgos identificados
+
+- El seed borra datos existentes antes de insertar los registros de prueba; debe usarse solo en entornos de desarrollo o pruebas.
+- Las categorias se validan correctamente siempre que la logica de backend respete `expiration_date` y excluya `renewal_status = 'renewed'` de la gestion pendiente.
+
+## Pendientes para Frontend
+
+- Usar estos datos como base de visualizacion cuando el backend exponga `GET /api/dashboard`.
+- Mostrar las categorias provenientes del backend, no recalcularlas en JavaScript.
+
+## Pendientes generales
+
+- Implementar `db.py`.
+- Implementar los endpoints definidos en `spec.md`.
+- Implementar tests automatizados para clasificacion y renovacion.
