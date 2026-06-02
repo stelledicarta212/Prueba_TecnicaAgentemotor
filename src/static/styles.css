@@ -1023,3 +1023,90 @@ body.dark-theme .user-profile {
         grid-template-columns: 1fr;
     }
 }
+
+/* Layout controls alignment for tabs + new button */
+.controls-actions {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+@media (max-width: 768px) {
+    .controls-actions {
+        width: 100%;
+        justify-content: space-between;
+    }
+}
+
+/* Modals grid layouts for inputs */
+.form-row-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+}
+
+.form-section-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--color-primary);
+    border-bottom: 2px solid var(--border-color);
+    padding-bottom: 8px;
+    margin-bottom: 16px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+@media (max-width: 768px) {
+    .form-row-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+}
+
+/* Inline Card Header actions (Edit / Archive) */
+.header-policy-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.header-actions-inline {
+    display: flex;
+    gap: 4px;
+    opacity: 0.4;
+    transition: var(--transition-all);
+}
+
+.header-policy-info:hover .header-actions-inline {
+    opacity: 1;
+}
+
+.btn-icon-inline {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    padding: 2px 6px;
+    border-radius: var(--radius-sm);
+    transition: var(--transition-all);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-icon-inline:hover {
+    background-color: rgba(15, 23, 42, 0.08);
+}
+
+.btn-icon-inline.btn-archive:hover {
+    background-color: var(--color-danger-light);
+}
+
+body.dark-theme .btn-icon-inline:hover {
+    background-color: rgba(248, 250, 252, 0.15);
+}
+
+body.dark-theme .btn-icon-inline.btn-archive:hover {
+    background-color: rgba(239, 68, 68, 0.2);
+}

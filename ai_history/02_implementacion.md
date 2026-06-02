@@ -792,3 +792,55 @@ Agregar un selector de tema claro/oscuro al dashboard de renovación de pólizas
 - **Persistencia limpia**: Solo el tema visual seleccionado se almacena en el navegador (`localStorage.getItem('theme')`). El estado de negocio se sigue consultando íntegramente desde SQLite mediante la API de Flask.
 - **Iconografía adaptada**: Se utiliza el sol (`☀️`) en modo oscuro para sugerir el cambio al modo claro y la luna (`🌙`) en modo claro para sugerir el cambio al modo oscuro.
 - **Compatibilidad estética**: Los bordes y sombras de las tarjetas de prioridad, badges e historial de gestiones se adaptan automáticamente a los contrastes del fondo oscuro sin perder legibilidad.
+
+## Fecha
+
+2026-06-02
+
+## Agente responsable
+
+Frontend - Gemini CLI
+
+## Objetivo
+
+Implementar las funcionalidades de creación, edición y archivado de pólizas y clientes en la interfaz del dashboard, consumiendo las nuevas APIs REST y asegurando que SQLite sea la única fuente de verdad.
+
+## Archivos modificados
+
+- `src/app.py`
+- `src/templates/index.html`
+- `src/static/app.js`
+- `src/static/styles.css`
+- `ai_history/02_implementacion.md`
+
+## Cambios realizados
+
+- **API Backend (`src/app.py`)**:
+  - Se modificaron las consultas de `get_dashboard`, `renew_policy` y `get_policy_response` para seleccionar el campo `clients.document_number AS client_document`.
+  - Se actualizó `build_policy_response` para que devuelva el campo `document_number` bajo el objeto `client`, permitiendo cargar correctamente el documento de identidad existente en el modal de edición de la interfaz.
+- **Estructura HTML (`src/templates/index.html`)**:
+  - Se añadió el botón "Nueva Póliza" (`➕ Nueva Póliza`) en la barra de controles principales.
+  - Se crearon dos nuevas estructuras de modales con grids de dos columnas: `#modal-create-policy` (Crear Cliente + Póliza) y `#modal-edit-policy` (Editar Cliente + Póliza).
+- **Lógica JavaScript (`src/static/app.js`)**:
+  - Se actualizaron las tarjetas generadas en `renderPolicies` para incluir los botones rápidos de edición (✏️) y archivado (📦) dentro de la barra superior.
+  - Se programó la función `openCreatePolicyModal()` y su envío asíncrono vía `POST` a `/api/policies` con las sub-estructuras `client` y `policy` esperadas por la API.
+  - Se implementó `openEditPolicyModal(id)` para precargar todos los campos del cliente y la póliza seleccionada en los inputs del formulario de edición, y su envío por `PUT` a `/api/policies/<id>`.
+  - Se añadió `confirmArchivePolicy(id, policy_number)` para mostrar una confirmación nativa y realizar la petición `PATCH` a `/api/policies/<id>/archive`, retirando la póliza de la vista activa (archivado lógico) sin borrar datos físicos.
+  - Se garantizó que tras cada creación, edición o archivado exitoso, se ejecute `loadDashboard()` para sincronizar los cambios de SQLite directamente en el navegador.
+- **Diseño y Estilos (`src/static/styles.css`)**:
+  - Se dio estilo al botón global de "Nueva Póliza" y a la alineación `.controls-actions`.
+  - Se diseñó el grid adaptativo de dos columnas `.form-row-grid` con cabeceras `.form-section-title` para separar visualmente los datos del cliente y de la póliza en formularios grandes.
+  - Se implementaron los estilos para los botones de acción rápida en las cabeceras de tarjeta (`.header-actions-inline` y `.btn-icon-inline`), configurando una transición de opacidad (se muestran al 100% solo al pasar el cursor sobre la cabecera) y adaptando colores de hover y contrastes para el modo oscuro.
+
+## Endpoints consumidos
+
+- `POST /api/policies`: Crea un nuevo cliente y una nueva póliza asociada.
+- `PUT /api/policies/<id>`: Actualiza los campos de cliente y póliza especificando la id de la póliza.
+- `PATCH /api/policies/<id>/archive`: Archiva lógicamente la póliza asignándole la fecha actual en `archived_at` (haciendo que no aparezca en el dashboard).
+
+## Decisiones de interfaz
+
+- **Botones en cabecera**: Los botones de edición y archivado se colocaron inline en el header de cada tarjeta para evitar el abarrotamiento de botones en las acciones inferiores. Su opacidad baja a 40% por defecto y sube a 100% al pasar el cursor, brindando una experiencia más limpia y fluida.
+- **Formularios en Grid**: Debido a la cantidad de campos para crear/editar (8 campos en total), los formularios se organizaron en dos columnas laterales (Cliente a la izquierda, Póliza a la derecha), con un comportamiento auto-apilable en dispositivos móviles.
+- **Refresco síncrono**: Cada operación exitosa en la API refresca inmediatamente el listado consumiendo `/api/dashboard`, previniendo inconsistencias de estado.
+

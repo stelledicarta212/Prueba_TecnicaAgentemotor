@@ -82,12 +82,17 @@
                     <span class="search-icon">🔍</span>
                     <input type="text" id="search-input" placeholder="Buscar por cliente, póliza o aseguradora..." aria-label="Buscar pólizas">
                 </div>
-                <div class="filter-tabs">
-                    <button class="tab-btn active" id="tab-all" onclick="filterByPriority('all')">Todas</button>
-                    <button class="tab-btn" id="tab-proxima_a_vencer" onclick="filterByPriority('proxima_a_vencer')">Próximas a vencer</button>
-                    <button class="tab-btn" id="tab-ventana_critica" onclick="filterByPriority('ventana_critica')">Ventana crítica</button>
-                    <button class="tab-btn" id="tab-nueva_contratacion" onclick="filterByPriority('nueva_contratacion')">Nueva contratación</button>
-                    <button class="tab-btn" id="tab-renovada" onclick="filterByPriority('renovada')">Renovadas</button>
+                <div class="controls-actions">
+                    <div class="filter-tabs">
+                        <button class="tab-btn active" id="tab-all" onclick="filterByPriority('all')">Todas</button>
+                        <button class="tab-btn" id="tab-proxima_a_vencer" onclick="filterByPriority('proxima_a_vencer')">Próximas a vencer</button>
+                        <button class="tab-btn" id="tab-ventana_critica" onclick="filterByPriority('ventana_critica')">Ventana crítica</button>
+                        <button class="tab-btn" id="tab-nueva_contratacion" onclick="filterByPriority('nueva_contratacion')">Nueva contratación</button>
+                        <button class="tab-btn" id="tab-renovada" onclick="filterByPriority('renovada')">Renovadas</button>
+                    </div>
+                    <button class="btn btn-primary" onclick="openCreatePolicyModal()">
+                        <span>➕</span> Nueva Póliza
+                    </button>
                 </div>
             </section>
 
@@ -223,6 +228,142 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" onclick="closeModal('modal-renew')">Cancelar</button>
                     <button type="submit" class="btn btn-success">Renovar e Inactivar Gestión</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Nueva Póliza -->
+    <div class="modal-backdrop hidden" id="modal-create-policy">
+        <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="modal-create-title">
+            <div class="modal-header">
+                <h2 id="modal-create-title">Crear Cliente + Póliza</h2>
+                <button class="close-btn" onclick="closeModal('modal-create-policy')">&times;</button>
+            </div>
+            <form id="form-create-policy" onsubmit="submitCreatePolicy(event)">
+                <div class="form-row-grid">
+                    <!-- Client Section -->
+                    <div class="form-section-column">
+                        <h3 class="form-section-title">Información del Cliente</h3>
+                        <div class="form-group">
+                            <label for="create-client-name">Nombre Completo *</label>
+                            <input type="text" id="create-client-name" required class="form-input" placeholder="Nombre completo del cliente">
+                        </div>
+                        <div class="form-group">
+                            <label for="create-client-document">Documento de Identidad</label>
+                            <input type="text" id="create-client-document" class="form-input" placeholder="CC-12345678 o similar">
+                        </div>
+                        <div class="form-group">
+                            <label for="create-client-email">Correo Electrónico</label>
+                            <input type="email" id="create-client-email" class="form-input" placeholder="cliente@correo.com">
+                        </div>
+                        <div class="form-group">
+                            <label for="create-client-phone">Teléfono de Contacto</label>
+                            <input type="text" id="create-client-phone" class="form-input" placeholder="+57 300 000 0000">
+                        </div>
+                    </div>
+                    
+                    <!-- Policy Section -->
+                    <div class="form-section-column">
+                        <h3 class="form-section-title">Información de la Póliza</h3>
+                        <div class="form-group">
+                            <label for="create-policy-number">Número de Póliza *</label>
+                            <input type="text" id="create-policy-number" required class="form-input" placeholder="POL-RAMO-0000">
+                        </div>
+                        <div class="form-group">
+                            <label for="create-policy-type">Ramo / Tipo de Seguro *</label>
+                            <select id="create-policy-type" required class="form-select">
+                                <option value="" disabled selected>Seleccione tipo de seguro</option>
+                                <option value="Auto">Auto</option>
+                                <option value="Hogar">Hogar</option>
+                                <option value="Vida">Vida</option>
+                                <option value="Salud">Salud</option>
+                                <option value="Moto">Moto</option>
+                                <option value="Otro">Otro / General</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="create-policy-insurer">Aseguradora</label>
+                            <input type="text" id="create-policy-insurer" class="form-input" placeholder="Seguros Andina o similar">
+                        </div>
+                        <div class="form-group">
+                            <label for="create-policy-expiration">Fecha de Vencimiento *</label>
+                            <input type="date" id="create-policy-expiration" required class="form-input">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('modal-create-policy')">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Crear Registro</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Editar Póliza -->
+    <div class="modal-backdrop hidden" id="modal-edit-policy">
+        <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="modal-edit-title">
+            <div class="modal-header">
+                <h2 id="modal-edit-title">Editar Cliente + Póliza</h2>
+                <button class="close-btn" onclick="closeModal('modal-edit-policy')">&times;</button>
+            </div>
+            <form id="form-edit-policy" onsubmit="submitEditPolicy(event)">
+                <input type="hidden" id="edit-policy-id">
+                <div class="form-row-grid">
+                    <!-- Client Section -->
+                    <div class="form-section-column">
+                        <h3 class="form-section-title">Información del Cliente</h3>
+                        <div class="form-group">
+                            <label for="edit-client-name">Nombre Completo *</label>
+                            <input type="text" id="edit-client-name" required class="form-input">
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-client-document">Documento de Identidad</label>
+                            <input type="text" id="edit-client-document" class="form-input">
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-client-email">Correo Electrónico</label>
+                            <input type="email" id="edit-client-email" class="form-input">
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-client-phone">Teléfono de Contacto</label>
+                            <input type="text" id="edit-client-phone" class="form-input">
+                        </div>
+                    </div>
+                    
+                    <!-- Policy Section -->
+                    <div class="form-section-column">
+                        <h3 class="form-section-title">Información de la Póliza</h3>
+                        <div class="form-group">
+                            <label for="edit-policy-number">Número de Póliza *</label>
+                            <input type="text" id="edit-policy-number" required class="form-input">
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-policy-type">Ramo / Tipo de Seguro *</label>
+                            <select id="edit-policy-type" required class="form-select">
+                                <option value="Auto">Auto</option>
+                                <option value="Hogar">Hogar</option>
+                                <option value="Vida">Vida</option>
+                                <option value="Salud">Salud</option>
+                                <option value="Moto">Moto</option>
+                                <option value="Otro">Otro / General</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-policy-insurer">Aseguradora</label>
+                            <input type="text" id="edit-policy-insurer" class="form-input">
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-policy-expiration">Fecha de Vencimiento *</label>
+                            <input type="date" id="edit-policy-expiration" required class="form-input">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('modal-edit-policy')">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Guardar Cambios</button>
                 </div>
             </form>
         </div>

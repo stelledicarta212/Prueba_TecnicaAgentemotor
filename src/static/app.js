@@ -237,7 +237,13 @@ function renderPolicies() {
 
         card.innerHTML = `
             <div class="card-header-row">
-                <span class="policy-number">${policy.policy_number}</span>
+                <div class="header-policy-info">
+                    <span class="policy-number">${policy.policy_number}</span>
+                    <div class="header-actions-inline">
+                        <button class="btn-icon-inline" onclick="openEditPolicyModal(${policy.id})" title="Editar Póliza">✏️</button>
+                        <button class="btn-icon-inline btn-archive" onclick="confirmArchivePolicy(${policy.id}, '${policy.policy_number}')" title="Archivar Póliza">📦</button>
+                    </div>
+                </div>
                 <span class="priority-badge">${priorityLabel}</span>
             </div>
             
@@ -519,5 +525,152 @@ function formatDate(dateStr) {
         return `${day} ${month} ${year}`;
     } catch (e) {
         return dateStr;
+    }
+}
+
+// Modal: Open Create Policy
+function openCreatePolicyModal() {
+    // Clear create policy form inputs
+    document.getElementById('form-create-policy').reset();
+    document.getElementById('modal-create-policy').classList.remove('hidden');
+}
+
+// API Post: Crear Cliente + Póliza
+async function submitCreatePolicy(event) {
+    event.preventDefault();
+
+    const payload = {
+        client: {
+            full_name: document.getElementById('create-client-name').value.trim(),
+            document_number: document.getElementById('create-client-document').value.trim() || null,
+            email: document.getElementById('create-client-email').value.trim() || null,
+            phone: document.getElementById('create-client-phone').value.trim() || null
+        },
+        policy: {
+            policy_number: document.getElementById('create-policy-number').value.trim(),
+            insurance_type: document.getElementById('create-policy-type').value,
+            insurer: document.getElementById('create-policy-insurer').value.trim() || null,
+            expiration_date: document.getElementById('create-policy-expiration').value
+        }
+    };
+
+    try {
+        const response = await fetch('/api/policies', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload)
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.error || 'Ocurrió un error al crear la póliza.');
+        }
+
+        showToast('Cliente y póliza creados exitosamente.', 'success');
+        closeModal('modal-create-policy');
+        
+        // Refresh dashboard data
+        await loadDashboard();
+    } catch (error) {
+        console.error('Error creating policy:', error);
+        showToast(error.message, 'error');
+    }
+}
+
+// Modal: Open Edit Policy
+function openEditPolicyModal(policyId) {
+    const policy = dashboardData.policies.find(p => p.id === policyId);
+    if (!policy) return;
+
+    document.getElementById('edit-policy-id').value = policy.id;
+    document.getElementById('edit-client-name').value = policy.client?.full_name || '';
+    document.getElementById('edit-client-document').value = policy.client?.document_number || '';
+    document.getElementById('edit-client-email').value = policy.client?.email || '';
+    document.getElementById('edit-client-phone').value = policy.client?.phone || '';
+
+    document.getElementById('edit-policy-number').value = policy.policy_number;
+    document.getElementById('edit-policy-type').value = policy.insurance_type;
+    document.getElementById('edit-policy-insurer').value = policy.insurer || '';
+    document.getElementById('edit-policy-expiration').value = policy.expiration_date;
+
+    document.getElementById('modal-edit-policy').classList.remove('hidden');
+}
+
+// API Put: Editar Cliente + Póliza
+async function submitEditPolicy(event) {
+    event.preventDefault();
+
+    const policyId = parseInt(document.getElementById('edit-policy-id').value);
+    
+    const payload = {
+        client: {
+            full_name: document.getElementById('edit-client-name').value.trim(),
+            document_number: document.getElementById('edit-client-document').value.trim() || null,
+            email: document.getElementById('edit-client-email').value.trim() || null,
+            phone: document.getElementById('edit-client-phone').value.trim() || null
+        },
+        policy: {
+            policy_number: document.getElementById('edit-policy-number').value.trim(),
+            insurance_type: document.getElementById('edit-policy-type').value,
+            insurer: document.getElementById('edit-policy-insurer').value.trim() || null,
+            expiration_date: document.getElementById('edit-policy-expiration').value
+        }
+    };
+
+    try {
+        const response = await fetch(`/api/policies/${policyId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload)
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.error || 'Ocurrió un error al actualizar la póliza.');
+        }
+
+        showToast('Datos actualizados exitosamente.', 'success');
+        closeModal('modal-edit-policy');
+        
+        // Refresh dashboard data
+        await loadDashboard();
+    } catch (error) {
+        console.error('Error updating policy:', error);
+        showToast(error.message, 'error');
+    }
+}
+
+// API Patch: Archivar Póliza
+async function confirmArchivePolicy(policyId, policyNumber) {
+    const isConfirmed = confirm(`¿Está seguro de que desea archivar la póliza ${policyNumber}?\nEsta acción la quitará de la vista de gestión activa.`);
+    if (!isConfirmed) return;
+
+    try {
+        const response = await fetch(`/api/policies/${policyId}/archive`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.error || 'Ocurrió un error al archivar la póliza.');
+        }
+
+        showToast(`La póliza ${policyNumber} se archivó exitosamente.`, 'success');
+        
+        // Refresh dashboard data
+        await loadDashboard();
+    } catch (error) {
+        console.error('Error archiving policy:', error);
+        showToast(error.message, 'error');
     }
 }
