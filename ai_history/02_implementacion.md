@@ -771,6 +771,65 @@ Backend - Codex CLI
 
 ## Objetivo
 
+Documentar el codigo de base de datos con comentarios breves dentro de cada seccion para facilitar mantenimiento y lectura.
+
+## Archivos modificados
+
+- `src/schema.sql`
+- `src/seed.sql`
+- `src/db.py`
+- `ai_history/02_implementacion.md`
+
+## Cambios realizados
+
+- Se agregaron comentarios de seccion en `schema.sql` para `advisors`, `clients`, `policies`, `contact_attempts` e indices.
+- Se agregaron comentarios de contexto en `seed.sql` para reset, reinicio de secuencias, asesor base, clientes demo y distribucion de polizas.
+- Se agregaron comentarios orientadores en `db.py` sobre rutas, integridad referencial, compatibilidad de schema y transacciones.
+- No se modifico la logica de negocio ni el comportamiento de la API.
+
+## Endpoints creados o modificados
+
+No aplica. No hubo cambios de endpoints.
+
+## Formato de request
+
+No aplica. No hubo cambios de contrato HTTP.
+
+## Formato de response
+
+No aplica. No hubo cambios de contrato HTTP.
+
+## Cambios en base de datos
+
+No hubo cambios funcionales en SQLite; solo documentacion inline del codigo y los scripts SQL.
+
+## Decisiones tomadas
+
+- Los comentarios son cortos y de orientacion, no narrativos.
+- Se documento por bloques para que otro agente o desarrollador pueda ubicar rapido la responsabilidad de cada seccion.
+
+## Riesgos identificados
+
+- Ninguno. Solo se agrego documentacion interna.
+
+## Pendientes para Frontend
+
+- Ninguno.
+
+## Pendientes generales
+
+- Mantener este nivel de documentacion cuando se agreguen nuevas migraciones o helpers de persistencia.
+
+## Fecha
+
+2026-06-02
+
+## Agente responsable
+
+Backend - Codex CLI
+
+## Objetivo
+
 Corregir `POST /api/policies` para manejar correctamente errores de unicidad y devolver siempre JSON al frontend.
 
 ## Archivos modificados
@@ -1025,4 +1084,3 @@ Comentar y documentar de manera exhaustiva el código del proyecto para su despl
   - Se segmentó y comentó la hoja de estilos por secciones (Variables Claro/Oscuro, Reinicio CSS, Componentes, Modales, Animaciones Keyframes y Media Queries de responsividad).
 - **Control de Versiones (Git)**:
   - Se sincronizaron, confirmaron y subieron los cambios de comentarios y estabilización al repositorio principal de GitHub.
-

@@ -1,5 +1,6 @@
 PRAGMA foreign_keys = ON;
 
+-- Advisors: responsable comercial de la cartera.
 CREATE TABLE IF NOT EXISTS advisors (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,
@@ -9,6 +10,7 @@ CREATE TABLE IF NOT EXISTS advisors (
     updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Clients: datos del cliente vinculados a un asesor.
 CREATE TABLE IF NOT EXISTS clients (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     advisor_id INTEGER NOT NULL,
@@ -23,6 +25,7 @@ CREATE TABLE IF NOT EXISTS clients (
         ON DELETE RESTRICT
 );
 
+-- Policies: polizas activas o renovadas, con soporte de archivado logico.
 CREATE TABLE IF NOT EXISTS policies (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     client_id INTEGER NOT NULL,
@@ -48,6 +51,7 @@ CREATE TABLE IF NOT EXISTS policies (
         ON DELETE RESTRICT
 );
 
+-- Contact attempts: historial comercial asociado a cada poliza.
 CREATE TABLE IF NOT EXISTS contact_attempts (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     policy_id INTEGER NOT NULL,
@@ -70,6 +74,7 @@ CREATE TABLE IF NOT EXISTS contact_attempts (
         ON DELETE RESTRICT
 );
 
+-- Indexes: aceleran joins y filtros frecuentes del dashboard/API.
 CREATE INDEX IF NOT EXISTS idx_clients_advisor_id
     ON clients(advisor_id);
 

@@ -2,6 +2,7 @@ from pathlib import Path
 import sqlite3
 
 
+# Rutas base de la capa de persistencia.
 BASE_DIR = Path(__file__).resolve().parent
 DATABASE_PATH = BASE_DIR / "database.sqlite"
 SCHEMA_PATH = BASE_DIR / "schema.sql"
@@ -17,6 +18,7 @@ def get_db_connection(db_path=DATABASE_PATH):
     """Create a SQLite connection configured as the system source of truth."""
     connection = sqlite3.connect(db_path)
     connection.row_factory = dict_factory
+    # Fuerza integridad referencial en cada conexion abierta.
     connection.execute("PRAGMA foreign_keys = ON")
     return connection
 
@@ -46,6 +48,7 @@ def ensure_policy_archive_column(db_path=DATABASE_PATH):
     """Keep existing SQLite databases compatible with the current schema."""
     connection = get_db_connection(db_path)
     try:
+        # Permite migrar bases existentes sin recrearlas desde cero.
         columns = [
             column["name"]
             for column in connection.execute("PRAGMA table_info(policies)").fetchall()
@@ -114,6 +117,7 @@ def execute_transaction(operations, db_path=DATABASE_PATH):
     connection = get_db_connection(db_path)
     results = []
     try:
+        # Todas las escrituras se confirman juntas o se revierten juntas.
         for query, params in operations:
             cursor = connection.execute(query, params or ())
             results.append(

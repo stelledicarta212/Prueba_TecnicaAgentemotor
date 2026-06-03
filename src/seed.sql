@@ -1,17 +1,21 @@
 PRAGMA foreign_keys = ON;
 
+-- Reset de tablas para dejar un entorno de prueba consistente.
 DELETE FROM contact_attempts;
 DELETE FROM policies;
 DELETE FROM clients;
 DELETE FROM advisors;
 
+-- Reinicia contadores autoincrementales para ids predecibles en tests/demo.
 DELETE FROM sqlite_sequence
 WHERE name IN ('contact_attempts', 'policies', 'clients', 'advisors');
 
+-- Asesor base de la cartera demo.
 INSERT INTO advisors (id, name, email, phone)
 VALUES
     (1, 'Maria Gonzalez', 'maria.gonzalez@agentemotor.test', '+57 300 111 2233');
 
+-- Clientes demo usados por dashboard y pruebas automatizadas.
 INSERT INTO clients (id, advisor_id, full_name, document_number, email, phone)
 VALUES
     (1, 1, 'Carlos Ramirez', 'CC-10010001', 'carlos.ramirez@example.com', '+57 310 100 0001'),
@@ -23,6 +27,7 @@ VALUES
     (7, 1, 'Miguel Alvarez', 'CC-10010007', 'miguel.alvarez@example.com', '+57 310 100 0007'),
     (8, 1, 'Diana Moreno', 'CC-10010008', 'diana.moreno@example.com', '+57 310 100 0008');
 
+-- Polizas demo distribuidas para cubrir todos los estados de negocio.
 INSERT INTO policies (
     id,
     client_id,
