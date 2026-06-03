@@ -245,7 +245,7 @@ También indicaría si esperan historial completo literal de conversación o una
 
 # Video
 
-Link del video: 
+El link del video será agregado antes de la entrega final.
 # Autor
 
 Carlos Alvis
