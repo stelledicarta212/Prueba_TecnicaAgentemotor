@@ -264,3 +264,81 @@ Todos los asistentes compartirán contexto mediante documentación persistida en
 La fuente de verdad continuará siendo la base de datos y no los estados temporales generados por los asistentes.
 
 ---
+
+### Endpoints implementados
+
+#### Dashboard
+
+```http
+GET /api/dashboard
+```
+
+Retorna:
+
+* KPIs comerciales
+* pólizas próximas a vencer
+* pólizas en ventana crítica
+* pólizas archivadas
+* historial de actividad
+
+---
+
+#### Registrar intento de contacto
+
+```http
+POST /api/contact-attempts
+```
+
+Permite registrar una gestión comercial realizada por el asesor.
+
+Ejemplos:
+
+* llamada realizada
+* mensaje enviado
+* cliente contactado
+* seguimiento pendiente
+
+---
+
+#### Renovar póliza
+
+```http
+POST /api/policies/{id}/renew
+```
+
+Renueva una póliza existente y actualiza automáticamente su fecha de vencimiento.
+
+---
+
+#### Crear póliza
+
+```http
+POST /api/policies
+```
+
+Crea una nueva póliza junto con la información necesaria para la gestión comercial.
+
+---
+
+#### Editar póliza
+
+```http
+PUT /api/policies/{id}
+```
+
+Permite modificar los datos de una póliza existente.
+
+---
+
+#### Archivar póliza
+
+```http
+PATCH /api/policies/{id}/archive
+```
+
+Realiza archivado lógico de la póliza.
+
+La información permanece disponible para auditoría y trazabilidad, pero deja de mostrarse en los listados activos.
+
+```
+```
