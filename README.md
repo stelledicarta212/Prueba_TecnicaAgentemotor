@@ -208,7 +208,42 @@ POST
 ```txt
 /api/policies/{id}/renew
 ```
+# Qué dejé fuera y por qué
 
+Decidí no implementar autenticación, roles de usuario, integración con aseguradoras, notificaciones automáticas ni importación desde Excel.
+
+La razón principal fue mantener el alcance controlado para una prueba técnica enfocada en el flujo principal de María: ver su cartera, priorizar renovaciones, registrar gestiones y renovar pólizas.
+
+# Qué faltaría para producción
+
+Si esta solución fuera a producción mañana, agregaría:
+
+- autenticación y manejo de sesiones;
+- roles y permisos por asesor;
+- migraciones formales de base de datos;
+- logging y monitoreo;
+- validaciones más completas;
+- auditoría de cambios;
+- importación desde Excel;
+- despliegue con servidor WSGI;
+- pruebas end-to-end;
+- integración con correo, WhatsApp o CRM.
+
+# Tiempo aproximado invertido
+
+El tiempo total invertido fue mayor al estimado inicialmente por la prueba, principalmente porque decidí trabajar el ejercicio de forma más completa: planificación, especificación, backend, frontend, tests, revisión de código, documentación y uso documentado de IA.
+
+Tiempo aproximado: [PON AQUÍ TU TIEMPO REAL].
+
+# Qué mejoraría de esta prueba técnica
+
+Mejoraría la prueba agregando un ejemplo mínimo del formato esperado para `ai_history`, porque es una parte obligatoria de la evaluación y puede interpretarse de distintas formas según la herramienta de IA utilizada.
+
+También indicaría si esperan historial completo literal de conversación o una bitácora cronológica estructurada con prompts, decisiones y resultados.
+
+# Video
+
+Link del video: 
 # Autor
 
 Carlos Alvis
