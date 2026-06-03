@@ -245,7 +245,7 @@ También indicaría si esperan historial completo literal de conversación o una
 
 # Video
 
-El link del video será agregado antes de la entrega final.
+URL DEL VIDEO con Google Drive: https://drive.google.com/file/d/1yOn4dFpRNjYm5efujtX7-E0W-wIAxewT/view?usp=sharing
 # Autor
 
 Carlos Alvis
