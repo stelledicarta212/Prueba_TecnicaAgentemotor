@@ -1084,3 +1084,17 @@ Comentar y documentar de manera exhaustiva el cÃ³digo del proyecto para su despl
   - Se segmentÃ³ y comentÃ³ la hoja de estilos por secciones (Variables Claro/Oscuro, Reinicio CSS, Componentes, Modales, Animaciones Keyframes y Media Queries de responsividad).
 - **Control de Versiones (Git)**:
   - Se sincronizaron, confirmaron y subieron los cambios de comentarios y estabilizaciÃ³n al repositorio principal de GitHub.
+
+## DevOps: Limpieza de Repositorio y Gitignore
+
+**Fecha:** 2 de junio de 2026
+**Objetivo:** Evitar que archivos temporales y compilados ensucien el árbol de trabajo y los commits.
+
+### Tareas realizadas
+- Se creó el archivo .gitignore en la raíz del proyecto.
+- Se configuró para ignorar directorios de caché de Python (__pycache__/, *.pyc, *.pyo, *.pyd).
+- Se configuró para ignorar bases de datos SQLite (*.db, *.sqlite, *.sqlite3).
+- Se configuró para ignorar entornos virtuales (.venv/, env/).
+- Se configuró para ignorar archivos de variables de entorno y del SO (.env, .DS_Store, Thumbs.db).
+- Se validó con git status que los directorios generados por pytest (src/__pycache__ y 	ests/__pycache__) fueron automáticamente excluidos del rastreo.
+- Se generó el commit (chore: add .gitignore for python, sqlite and OS artifacts) para consolidar la limpieza del repositorio.
