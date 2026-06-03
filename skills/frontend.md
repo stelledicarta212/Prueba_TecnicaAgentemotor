@@ -33,7 +33,7 @@ Antes de implementar cualquier cambio debes revisar:
 
 * spec.md
 * docs/01_flujo_negocio.md
-* docs/02_arquitectura.md
+* docs/05_arquitectura.md
 * docs/03_modelo_datos.md
 * docs/04_clasificacion_prioridades.md
 * ai_history/01_planeacion.md
