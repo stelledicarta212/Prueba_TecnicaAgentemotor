@@ -233,7 +233,9 @@ Si esta solución fuera a producción mañana, agregaría:
 
 El tiempo total invertido fue mayor al estimado inicialmente por la prueba, principalmente porque decidí trabajar el ejercicio de forma más completa: planificación, especificación, backend, frontend, tests, revisión de código, documentación y uso documentado de IA.
 
-Tiempo aproximado: [PON AQUÍ TU TIEMPO REAL].
+Tiempo aproximado: 6 horas.
+
+El tiempo fue distribuido entre análisis del problema, definición de alcance, implementación backend, construcción del frontend, pruebas, documentación y coordinación con herramientas de IA.
 
 # Qué mejoraría de esta prueba técnica
 
