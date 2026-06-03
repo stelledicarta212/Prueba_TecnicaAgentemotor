@@ -160,23 +160,77 @@ La arquitectura fue diseñada para garantizar que toda la operación dependa de 
 
 ### Obtener Dashboard
 
+```http
 GET /api/dashboard
+```
 
-Retorna las pólizas clasificadas según prioridad.
+Retorna el resumen operativo y las pólizas activas clasificadas según prioridad.
+
+Incluye:
+- resumen de métricas;
+- datos de póliza;
+- datos del cliente;
+- datos del asesor;
+- historial de gestiones comerciales;
+- prioridad calculada en backend.
 
 ### Registrar Gestión
 
+```http
 POST /api/contact-attempts
+```
 
 Permite registrar llamadas, correos o mensajes realizados a un cliente.
 
+Este endpoint guarda trazabilidad comercial sobre una póliza específica.
+
 ### Renovar Póliza
 
+```http
 POST /api/policies/{id}/renew
+```
 
 Permite actualizar la fecha de vencimiento de una póliza renovada.
 
-Todos los endpoints interactúan directamente con la fuente de verdad del sistema.
+Al renovar:
+- actualiza `expiration_date`;
+- cambia `renewal_status` a `renewed`;
+- registra `renewed_at`;
+- la prioridad pasa a renovada.
+
+### Crear Cliente + Póliza
+
+```http
+POST /api/policies
+```
+
+Permite crear un nuevo cliente junto con su póliza.
+
+Se decidió crear cliente y póliza en una misma operación porque para María el flujo real no es crear entidades aisladas, sino registrar una oportunidad de gestión comercial completa.
+
+### Editar Cliente + Póliza
+
+```http
+PUT /api/policies/{id}
+```
+
+Permite editar datos del cliente y de la póliza asociada.
+
+Este endpoint permite corregir información sin depender de cambios manuales en la base de datos.
+
+### Archivar Póliza
+
+```http
+PATCH /api/policies/{id}/archive
+```
+
+Permite archivar una póliza sin eliminarla físicamente.
+
+Se eligió archivado lógico en lugar de borrado físico para conservar trazabilidad histórica de la gestión comercial.
+
+Todos los endpoints interactúan directamente con SQLite mediante la API.
+
+La base de datos permanece como fuente de verdad del sistema. El frontend no calcula prioridades ni persiste información crítica de negocio.
 
 ---
 
@@ -210,9 +264,9 @@ Se implementarán pruebas automatizadas enfocadas en la regla más importante de
 
 Adicionalmente se documentarán pruebas manuales utilizando Postman para validar:
 
-* GET /api/dashboard
-* POST /api/contact-attempts
-* POST /api/policies/{id}/renew
+* `GET /api/dashboard`
+* `POST /api/contact-attempts`
+* `POST /api/policies/{id}/renew`
 
 La documentación de estas pruebas quedará almacenada en la carpeta `postman`.
 
@@ -228,9 +282,11 @@ No se implementó autenticación ni gestión multiusuario debido a que el proble
 
 La solución busca demostrar entendimiento del negocio, claridad arquitectónica y capacidad para transformar un proceso manual basado en Excel en una aplicación respaldada por una fuente de verdad centralizada y confiable.
 
+---
+
 ## 12. Uso de IA durante el desarrollo
 
-Durante el desarrollo de esta prueba se utilizarán herramientas de IA como apoyo técni  co controlado.
+Durante el desarrollo de esta prueba se utilizarán herramientas de IA como apoyo técnico controlado.
 
 La estrategia será trabajar con dos asistentes de IA en paralelo:
 
@@ -242,6 +298,8 @@ Cada IA deberá registrar las tareas realizadas, decisiones tomadas y cambios ap
 El uso de IA no reemplaza la responsabilidad técnica del desarrollador. La arquitectura, alcance, decisiones finales y revisión del código serán validadas manualmente antes de la entrega.
 
 Todas las conversaciones relevantes serán guardadas en archivos Markdown dentro de `ai_history`, siguiendo el requisito obligatorio de la prueba.
+
+---
 
 ## 13. Estrategia de colaboración asistida por IA
 
@@ -339,6 +397,3 @@ PATCH /api/policies/{id}/archive
 Realiza archivado lógico de la póliza.
 
 La información permanece disponible para auditoría y trazabilidad, pero deja de mostrarse en los listados activos.
-
-```
-```
