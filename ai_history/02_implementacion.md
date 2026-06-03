@@ -989,3 +989,40 @@ Implementar las funcionalidades de creación, edición y archivado de pólizas y
 - **Botones en cabecera**: Los botones de edición y archivado se colocaron inline en el header de cada tarjeta para evitar el abarrotamiento de botones en las acciones inferiores. Su opacidad baja a 40% por defecto y sube a 100% al pasar el cursor, brindando una experiencia más limpia y fluida.
 - **Formularios en Grid**: Debido a la cantidad de campos para crear/editar (8 campos en total), los formularios se organizaron en dos columnas laterales (Cliente a la izquierda, Póliza a la derecha), con un comportamiento auto-apilable en dispositivos móviles.
 - **Refresco síncrono**: Cada operación exitosa en la API refresca inmediatamente el listado consumiendo `/api/dashboard`, previniendo inconsistencias de estado.
+
+## Fecha
+
+2026-06-02
+
+## Agente responsable
+
+Frontend - Gemini CLI
+
+## Objetivo
+
+Comentar y documentar de manera exhaustiva el código del proyecto para su despliegue a producción, detallando funcionalidades, estructuras y accesos. Asimismo, corregir un bug de desfase de zona horaria en el servidor de pruebas para garantizar el éxito continuo del suite de tests.
+
+## Archivos modificados
+
+- `src/app.py`
+- `src/templates/index.html`
+- `src/static/app.js`
+- `src/static/styles.css`
+- `ai_history/02_implementacion.md`
+
+## Cambios realizados
+
+- **Corrección de Bug de Zona Horaria (Timezone Sync en `src/app.py`)**:
+  - Se identificó un desfase entre `date('now')` de SQLite (calculado bajo la hora UTC en base a la configuración por defecto de la base de datos) y `date.today()` de Python (calculado bajo la hora local de la máquina). Cerca de la medianoche UTC, esto provocaba que las pólizas vencidas hace 1 día se clasificaran falsamente en Python como vigentes (diferencia de 0 días), haciendo fallar los tests automatizados de clasificación.
+  - Se importó `timezone` en `src/app.py` y se modificó `classify_policy` para calcular la diferencia usando la fecha actual de UTC (`datetime.now(timezone.utc).date()`), alineándolo al 100% con SQLite y solucionando el falso negativo del suite de tests de forma permanente.
+- **Documentación de app.py**:
+  - Se agregaron docstrings descriptivos detallados a nivel de archivo y a nivel de cada endpoint de la API REST (`/api/dashboard`, `/api/contact-attempts`, `/api/policies`, `/api/policies/<id>`, `/api/policies/<id>/archive`, `/api/policies/<id>/renew`), detallando parámetros de entrada, salidas JSON, códigos de respuesta HTTP y control de errores.
+- **Documentación de index.html**:
+  - Se documentó semánticamente cada bloque de la interfaz (Estructura SPA, componentes de cabecera, indicadores KPIs, rejilla de tarjetas y los cuatro modales de negocio), incorporando descripciones sobre la accesibilidad aria y las variables del DOM.
+- **Documentación de app.js**:
+  - Se comentaron todas las funciones asíncronas de integración con la API, las funciones de control de estado del DOM (cargando, sin resultados, errores) y los utilitarios de formateo.
+- **Documentación de styles.css**:
+  - Se segmentó y comentó la hoja de estilos por secciones (Variables Claro/Oscuro, Reinicio CSS, Componentes, Modales, Animaciones Keyframes y Media Queries de responsividad).
+- **Control de Versiones (Git)**:
+  - Se sincronizaron, confirmaron y subieron los cambios de comentarios y estabilización al repositorio principal de GitHub.
+

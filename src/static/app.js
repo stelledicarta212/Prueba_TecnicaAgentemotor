@@ -1,9 +1,22 @@
-// Global State (SQLite & API remain the source of truth, no LocalStorage used)
-let dashboardData = null;
-let currentFilter = 'all';
-let searchQuery = '';
+/**
+ * ============================================================================
+ * Agentemotor SPA Frontend Application Logic
+ * ============================================================================
+ * 
+ * Principio Arquitectónico:
+ * - SQLite es la ÚNICA fuente de verdad.
+ * - No se almacena información crítica ni estado de negocio en LocalStorage.
+ * - El frontend es reactivo: cada acción exitosa de escritura (creación, edición,
+ *   archivación, renovación o gestión) refresca los datos mediante la API.
+ * - Las prioridades de las pólizas se reciben precalculadas desde el Backend.
+ */
 
-// DOM Elements
+// --- Estado Global de la Aplicación ---
+let dashboardData = null; // Almacena la última respuesta íntegra de /api/dashboard
+let currentFilter = 'all'; // Filtro de prioridad activo ('all', 'proxima_a_vencer', etc.)
+let searchQuery = '';     // Filtro de texto de búsqueda activo (minúsculas y sin espacios extras)
+
+// --- Referencias a Elementos DOM Comunes ---
 const policiesContainer = document.getElementById('policies-container');
 const loadingSpinner = document.getElementById('loading-spinner');
 const errorBanner = document.getElementById('error-banner');
@@ -12,28 +25,32 @@ const emptyState = document.getElementById('empty-state');
 const searchInput = document.getElementById('search-input');
 const toastContainer = document.getElementById('toast-container');
 
-// Stats DOM Elements
+// --- Referencias a los Indicadores de las Tarjetas de Estadísticas (KPIs) ---
 const statTotal = document.getElementById('stat-total');
 const statProxima = document.getElementById('stat-proxima');
 const statCritica = document.getElementById('stat-critica');
 const statNueva = document.getElementById('stat-nueva');
 const statRenovada = document.getElementById('stat-renovada');
 
-// Initialize Application
+/**
+ * Evento de Inicio de la Aplicación (DOMContentLoaded)
+ * Inicializa las preferencias visuales de tema y vincula los escuchadores base.
+ */
 document.addEventListener('DOMContentLoaded', () => {
-    // Theme initialization
+    // 1. Inicialización y Carga de Tema Visual (Claro / Oscuro) desde LocalStorage
     const savedTheme = localStorage.getItem('theme');
     const themeIcon = document.getElementById('theme-icon');
     const themeToggle = document.getElementById('theme-toggle');
 
     if (savedTheme === 'dark') {
         document.body.classList.add('dark-theme');
-        if (themeIcon) themeIcon.textContent = '☀️';
+        if (themeIcon) themeIcon.textContent = '☀️'; // Sol para sugerir cambio a modo claro
     } else {
         document.body.classList.remove('dark-theme');
-        if (themeIcon) themeIcon.textContent = '🌙';
+        if (themeIcon) themeIcon.textContent = '🌙'; // Luna para sugerir cambio a modo oscuro
     }
 
+    // Vinculación de clic al selector de tema
     if (themeToggle) {
         themeToggle.addEventListener('click', () => {
             document.body.classList.toggle('dark-theme');
@@ -45,17 +62,20 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Search input listener with basic event handling
+    // 2. Vinculación del buscador en tiempo real (con filtrado reactivo)
     searchInput.addEventListener('input', (e) => {
         searchQuery = e.target.value.toLowerCase().trim();
         renderPolicies();
     });
 
-    // Load initial data
+    // 3. Ejecución de carga inicial de datos desde la base de datos
     loadDashboard();
 });
 
-// Load dashboard data from the API
+/**
+ * Consulta de Datos Principal (GET /api/dashboard)
+ * Recupera el listado y métricas de la base de datos SQLite y pobla la UI.
+ */
 async function loadDashboard() {
     showLoading(true);
     showError(false);
@@ -69,7 +89,7 @@ async function loadDashboard() {
         
         dashboardData = await response.json();
         
-        // Update Advisor Name if available
+        // Sincronización del perfil de usuario y avatar con el nombre del asesor actual
         if (dashboardData.policies && dashboardData.policies.length > 0) {
             const advisorName = dashboardData.policies[0].advisor?.name;
             if (advisorName) {
@@ -78,6 +98,7 @@ async function loadDashboard() {
             }
         }
 
+        // Actualización de KPIs y renderizado de tarjetas
         updateStats(dashboardData.summary);
         renderPolicies();
     } catch (error) {
@@ -89,7 +110,10 @@ async function loadDashboard() {
     }
 }
 
-// Update stats in KPI cards
+/**
+ * Actualiza los contadores numéricos de las tarjetas de resumen (KPIs)
+ * @param {Object} summary - Resumen de pólizas clasificado por prioridad enviado por la API
+ */
 function updateStats(summary) {
     if (!summary) return;
     
@@ -100,11 +124,14 @@ function updateStats(summary) {
     statRenovada.textContent = summary.renovada || 0;
 }
 
-// Tab and KPI card filter selection
+/**
+ * Filtra el listado de pólizas según la métrica seleccionada
+ * @param {string} priority - Código de prioridad de la póliza ('all', 'ventana_critica', etc.)
+ */
 function filterByPriority(priority) {
     currentFilter = priority;
     
-    // Update active tab styles
+    // Sincroniza la clase activa de las pestañas (tabs)
     const tabs = document.querySelectorAll('.tab-btn');
     tabs.forEach(tab => {
         if (tab.id === `tab-${priority}`) {
@@ -116,7 +143,7 @@ function filterByPriority(priority) {
         }
     });
 
-    // Update active card border/styles if desired
+    // Sincroniza el relieve visual de las tarjetas métricas (KPIs)
     const cards = document.querySelectorAll('.metric-card');
     cards.forEach(card => {
         if (card.dataset.filter === priority) {
@@ -131,7 +158,10 @@ function filterByPriority(priority) {
     renderPolicies();
 }
 
-// Render filtered policy list
+/**
+ * Renderizado de Tarjetas de Pólizas en Pantalla
+ * Filtra y crea la estructura DOM para cada póliza con sus respectivas acciones e historiales.
+ */
 function renderPolicies() {
     policiesContainer.innerHTML = '';
     
@@ -140,14 +170,14 @@ function renderPolicies() {
         return;
     }
 
-    // Filter policies
+    // Aplica los filtros de prioridad y búsqueda de texto cruzadamente
     const filteredPolicies = dashboardData.policies.filter(policy => {
-        // Priority filter
+        // Filtro por prioridad
         if (currentFilter !== 'all' && policy.priority !== currentFilter) {
             return false;
         }
 
-        // Search query filter (search by name, policy number, insurer)
+        // Filtro por texto en tiempo real
         if (searchQuery) {
             const clientName = (policy.client?.full_name || '').toLowerCase();
             const policyNum = (policy.policy_number || '').toLowerCase();
@@ -163,6 +193,7 @@ function renderPolicies() {
         return true;
     });
 
+    // En caso de que el listado esté vacío para el filtro actual
     if (filteredPolicies.length === 0) {
         showEmptyState(true);
         return;
@@ -170,12 +201,12 @@ function renderPolicies() {
 
     showEmptyState(false);
 
-    // Create cards for each policy
+    // Iteración para construir cada tarjeta del grid
     filteredPolicies.forEach(policy => {
         const card = document.createElement('article');
         card.className = `policy-card priority-${policy.priority}`;
         
-        // Format Priority Badge
+        // Mapeo amigable para el badge de prioridad comercial
         const priorityLabels = {
             'proxima_a_vencer': 'Próxima a vencer',
             'ventana_critica': 'Ventana crítica',
@@ -185,7 +216,7 @@ function renderPolicies() {
         };
         const priorityLabel = priorityLabels[policy.priority] || policy.priority;
 
-        // Render contact history attempts (if any)
+        // Renderizado del historial de intentos de contacto (Gestiones)
         let historyHtml = '<div class="empty-history">Sin gestiones registradas</div>';
         if (policy.contact_attempts && policy.contact_attempts.length > 0) {
             historyHtml = `<div class="history-timeline">`;
@@ -211,15 +242,15 @@ function renderPolicies() {
             historyHtml += `</div>`;
         }
 
-        // Render card action buttons dynamically depending on renewal status
+        // Renderizado condicionado de botones de acción en base a su renovación
         let actionsHtml = '';
         if (policy.renewal_status === 'pending') {
             actionsHtml = `
                 <div class="card-actions">
-                    <button class="btn btn-secondary" onclick="openGestionModal(${policy.id})">
+                    <button class="btn btn-secondary" onclick="openGestionModal(${policy.id})" title="Registrar un intento de llamada o contacto">
                         <span>📝</span> Registrar Gestión
                     </button>
-                    <button class="btn btn-primary" onclick="openRenewModal(${policy.id})">
+                    <button class="btn btn-primary" onclick="openRenewModal(${policy.id})" title="Actualizar vigencia de la póliza">
                         <span>🔄</span> Renovar
                     </button>
                 </div>
@@ -235,6 +266,7 @@ function renderPolicies() {
             `;
         }
 
+        // Estructura interna de la tarjeta de póliza
         card.innerHTML = `
             <div class="card-header-row">
                 <div class="header-policy-info">
@@ -251,11 +283,11 @@ function renderPolicies() {
                 <h4>${policy.client?.full_name || 'Sin Nombre'}</h4>
                 <div class="info-item">
                     <span>📞</span>
-                    <a href="tel:${policy.client?.phone}">${policy.client?.phone || 'No registra'}</a>
+                    <a href="tel:${policy.client?.phone}" title="Llamar por teléfono">${policy.client?.phone || 'No registra'}</a>
                 </div>
                 <div class="info-item">
                     <span>✉️</span>
-                    <a href="mailto:${policy.client?.email}">${policy.client?.email || 'No registra'}</a>
+                    <a href="mailto:${policy.client?.email}" title="Enviar correo electrónico">${policy.client?.email || 'No registra'}</a>
                 </div>
             </div>
 
@@ -286,21 +318,25 @@ function renderPolicies() {
     });
 }
 
-// Modal: Open Registrar Gestión
+/**
+ * Modal: Abre y configura el formulario para Registrar Gestión Comercial
+ * @param {number} policyId - ID único de la póliza
+ */
 function openGestionModal(policyId) {
     const policy = dashboardData.policies.find(p => p.id === policyId);
     if (!policy) return;
 
+    // Configuración de campos de control
     document.getElementById('gestion-policy-id').value = policy.id;
     document.getElementById('gestion-policy-info').textContent = `${policy.policy_number} | ${policy.client?.full_name}`;
     
-    // Clear inputs
+    // Limpieza de inputs previos
     const radios = document.getElementsByName('channel');
     radios.forEach(radio => radio.checked = false);
     document.getElementById('gestion-result').selectedIndex = 0;
     document.getElementById('gestion-notes').value = '';
     
-    // Auto-populate local date time
+    // Autocompleta con la fecha y hora local del sistema actual en formato datetime-local
     const now = new Date();
     const offset = now.getTimezoneOffset() * 60000;
     const localISOTime = (new Date(now - offset)).toISOString().slice(0, 16);
@@ -309,15 +345,19 @@ function openGestionModal(policyId) {
     document.getElementById('modal-gestion').classList.remove('hidden');
 }
 
-// Modal: Open Renovar Póliza
+/**
+ * Modal: Abre y configura el formulario para Renovar Póliza
+ * @param {number} policyId - ID único de la póliza
+ */
 function openRenewModal(policyId) {
     const policy = dashboardData.policies.find(p => p.id === policyId);
     if (!policy) return;
 
+    // Configuración de campos de control
     document.getElementById('renew-policy-id').value = policy.id;
     document.getElementById('renew-policy-info').textContent = `${policy.policy_number} | ${policy.client?.full_name}`;
     
-    // Default expiration date to 1 year from current expiration date
+    // Proyecta la nueva fecha de vencimiento a 1 año después de su vencimiento actual
     const currentExp = new Date(policy.expiration_date);
     currentExp.setFullYear(currentExp.getFullYear() + 1);
     const defaultNewExp = currentExp.toISOString().split('T')[0];
@@ -326,12 +366,18 @@ function openRenewModal(policyId) {
     document.getElementById('modal-renew').classList.remove('hidden');
 }
 
-// Modal: Close
+/**
+ * Modal: Cierra cualquier modal abierto por su ID
+ * @param {string} modalId - Atributo id del contenedor del modal
+ */
 function closeModal(modalId) {
     document.getElementById(modalId).classList.add('hidden');
 }
 
-// API Post: Registrar Gestión Commercial
+/**
+ * API Post: Registra un nuevo intento de contacto (POST /api/contact-attempts)
+ * @param {Event} event - Evento nativo del formulario onsubmit
+ */
 async function submitGestion(event) {
     event.preventDefault();
     
@@ -353,10 +399,9 @@ async function submitGestion(event) {
         notes: notesInput.value.trim() || null
     };
 
-    // Format the date picker if defined, otherwise leave it blank to let backend handle it
+    // Si se especificó una fecha personalizada, se envía formateada como ISO
     if (dateInput.value) {
         try {
-            // Convert to YYYY-MM-DDTHH:MM:SS format
             const selectedDate = new Date(dateInput.value);
             payload.attempted_at = selectedDate.toISOString().slice(0, 19);
         } catch (e) {
@@ -382,7 +427,7 @@ async function submitGestion(event) {
         showToast('Gestión comercial registrada con éxito.', 'success');
         closeModal('modal-gestion');
         
-        // Refresh dashboard from API
+        // Recarga de datos para mantener SQLite como única fuente de verdad
         await loadDashboard();
     } catch (error) {
         console.error('Error submitting contact attempt:', error);
@@ -390,7 +435,10 @@ async function submitGestion(event) {
     }
 }
 
-// API Post: Renovar Póliza
+/**
+ * API Post: Renueva comercialmente una póliza (POST /api/policies/<id>/renew)
+ * @param {Event} event - Evento nativo del formulario onsubmit
+ */
 async function submitRenew(event) {
     event.preventDefault();
 
@@ -424,7 +472,7 @@ async function submitRenew(event) {
         showToast(`La póliza se renovó con éxito.`, 'success');
         closeModal('modal-renew');
         
-        // Refresh dashboard from API
+        // Recarga de datos para mantener SQLite como única fuente de verdad
         await loadDashboard();
     } catch (error) {
         console.error('Error renewing policy:', error);
@@ -432,110 +480,18 @@ async function submitRenew(event) {
     }
 }
 
-// UI State Toggles
-function showLoading(visible) {
-    if (visible) {
-        loadingSpinner.classList.remove('hidden');
-    } else {
-        loadingSpinner.classList.add('hidden');
-    }
-}
-
-function showError(visible, msg = '') {
-    if (visible) {
-        errorMessage.textContent = msg || 'Ocurrió un error inesperado al conectar con el servidor.';
-        errorBanner.classList.remove('hidden');
-    } else {
-        errorBanner.classList.add('hidden');
-    }
-}
-
-function showEmptyState(visible) {
-    if (visible) {
-        emptyState.classList.remove('hidden');
-    } else {
-        emptyState.classList.add('hidden');
-    }
-}
-
-// Toast Notifications Helper
-function showToast(message, type = 'info') {
-    const toast = document.createElement('div');
-    toast.className = `toast toast-${type}`;
-    
-    const icons = {
-        'success': '✨',
-        'error': '⚠️',
-        'info': 'ℹ️'
-    };
-    
-    toast.innerHTML = `
-        <span class="toast-icon">${icons[type] || '⚡'}</span>
-        <span class="toast-msg">${message}</span>
-    `;
-    
-    toastContainer.appendChild(toast);
-    
-    // Auto dismiss after 4 seconds
-    setTimeout(() => {
-        toast.style.animation = 'toastIn 0.3s reverse cubic-bezier(0.16, 1, 0.3, 1)';
-        setTimeout(() => {
-            toast.remove();
-        }, 300);
-    }, 4000);
-}
-
-// General Utilities
-function getInitials(name) {
-    if (!name) return 'MG';
-    const parts = name.split(' ');
-    if (parts.length >= 2) {
-        return (parts[0][0] + parts[1][0]).toUpperCase();
-    }
-    return name.slice(0, 2).toUpperCase();
-}
-
-function formatDate(dateStr) {
-    if (!dateStr) return 'N/A';
-    
-    // Simple display formatter for dates in standard format
-    try {
-        const d = new Date(dateStr.replace(' ', 'T'));
-        if (isNaN(d.getTime())) {
-            return dateStr; // fallback if string isn't parsed
-        }
-        
-        // Month names in Spanish
-        const months = [
-            'ene', 'feb', 'mar', 'abr', 'may', 'jun',
-            'jul', 'ago', 'sep', 'oct', 'nov', 'dic'
-        ];
-        
-        const day = d.getDate();
-        const month = months[d.getMonth()];
-        const year = d.getFullYear();
-        
-        // If it includes time, append it
-        if (dateStr.includes(':')) {
-            const hours = String(d.getHours()).padStart(2, '0');
-            const minutes = String(d.getMinutes()).padStart(2, '0');
-            return `${day} ${month} ${year}, ${hours}:${minutes}`;
-        }
-        
-        return `${day} ${month} ${year}`;
-    } catch (e) {
-        return dateStr;
-    }
-}
-
-// Modal: Open Create Policy
+/**
+ * Modal: Abre el formulario limpio para Crear Cliente y Póliza
+ */
 function openCreatePolicyModal() {
-    // Clear create policy form inputs
     document.getElementById('form-create-policy').reset();
     document.getElementById('modal-create-policy').classList.remove('hidden');
 }
 
-// API Post: Crear Cliente + Póliza
+/**
+ * API Post: Registra un nuevo Cliente con su Póliza (POST /api/policies)
+ * @param {Event} event - Evento nativo del formulario onsubmit
+ */
 async function submitCreatePolicy(event) {
     event.preventDefault();
 
@@ -572,7 +528,7 @@ async function submitCreatePolicy(event) {
         showToast('Cliente y póliza creados exitosamente.', 'success');
         closeModal('modal-create-policy');
         
-        // Refresh dashboard data
+        // Recarga de datos para mantener SQLite como única fuente de verdad
         await loadDashboard();
     } catch (error) {
         console.error('Error creating policy:', error);
@@ -580,11 +536,15 @@ async function submitCreatePolicy(event) {
     }
 }
 
-// Modal: Open Edit Policy
+/**
+ * Modal: Abre y precarga los campos existentes para Editar Cliente y Póliza
+ * @param {number} policyId - ID único de la póliza a modificar
+ */
 function openEditPolicyModal(policyId) {
     const policy = dashboardData.policies.find(p => p.id === policyId);
     if (!policy) return;
 
+    // Precarga de los inputs en el formulario
     document.getElementById('edit-policy-id').value = policy.id;
     document.getElementById('edit-client-name').value = policy.client?.full_name || '';
     document.getElementById('edit-client-document').value = policy.client?.document_number || '';
@@ -599,7 +559,10 @@ function openEditPolicyModal(policyId) {
     document.getElementById('modal-edit-policy').classList.remove('hidden');
 }
 
-// API Put: Editar Cliente + Póliza
+/**
+ * API Put: Modifica los datos de Cliente + Póliza (PUT /api/policies/<id>)
+ * @param {Event} event - Evento nativo del formulario onsubmit
+ */
 async function submitEditPolicy(event) {
     event.preventDefault();
 
@@ -638,7 +601,7 @@ async function submitEditPolicy(event) {
         showToast('Datos actualizados exitosamente.', 'success');
         closeModal('modal-edit-policy');
         
-        // Refresh dashboard data
+        // Recarga de datos para mantener SQLite como única fuente de verdad
         await loadDashboard();
     } catch (error) {
         console.error('Error updating policy:', error);
@@ -646,7 +609,11 @@ async function submitEditPolicy(event) {
     }
 }
 
-// API Patch: Archivar Póliza
+/**
+ * API Patch: Archiva lógicamente una póliza (PATCH /api/policies/<id>/archive)
+ * @param {number} policyId - ID de la póliza
+ * @param {string} policyNumber - Código o número identificador visible de la póliza
+ */
 async function confirmArchivePolicy(policyId, policyNumber) {
     const isConfirmed = confirm(`¿Está seguro de que desea archivar la póliza ${policyNumber}?\nEsta acción la quitará de la vista de gestión activa.`);
     if (!isConfirmed) return;
@@ -667,10 +634,135 @@ async function confirmArchivePolicy(policyId, policyNumber) {
 
         showToast(`La póliza ${policyNumber} se archivó exitosamente.`, 'success');
         
-        // Refresh dashboard data
+        // Recarga de datos para mantener SQLite como única fuente de verdad
         await loadDashboard();
     } catch (error) {
         console.error('Error archiving policy:', error);
         showToast(error.message, 'error');
+    }
+}
+
+// --- Métodos de Control Visual de Estados ---
+
+/**
+ * Muestra u oculta la animación de carga
+ * @param {boolean} visible - Verdadero para mostrar, falso para ocultar
+ */
+function showLoading(visible) {
+    if (visible) {
+        loadingSpinner.classList.remove('hidden');
+    } else {
+        loadingSpinner.classList.add('hidden');
+    }
+}
+
+/**
+ * Muestra u oculta el banner de error crítico de API
+ * @param {boolean} visible - Verdadero para mostrar
+ * @param {string} msg - Texto descriptivo del error ocurrido
+ */
+function showError(visible, msg = '') {
+    if (visible) {
+        errorMessage.textContent = msg || 'Ocurrió un error inesperado al conectar con el servidor.';
+        errorBanner.classList.remove('hidden');
+    } else {
+        errorBanner.classList.add('hidden');
+    }
+}
+
+/**
+ * Muestra u oculta la pantalla de "Sin resultados"
+ * @param {boolean} visible - Verdadero para mostrar
+ */
+function showEmptyState(visible) {
+    if (visible) {
+        emptyState.classList.remove('hidden');
+    } else {
+        emptyState.classList.add('hidden');
+    }
+}
+
+// --- Componente: Notificaciones Flotantes (Toasts) ---
+
+/**
+ * Crea y anima un Toast en la esquina inferior derecha
+ * @param {string} message - Mensaje visible del aviso
+ * @param {string} type - Tipo de aviso para coloración ('success', 'error', 'info')
+ */
+function showToast(message, type = 'info') {
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    
+    const icons = {
+        'success': '✨',
+        'error': '⚠️',
+        'info': 'ℹ️'
+    };
+    
+    toast.innerHTML = `
+        <span class="toast-icon" aria-hidden="true">${icons[type] || '⚡'}</span>
+        <span class="toast-msg">${message}</span>
+    `;
+    
+    toastContainer.appendChild(toast);
+    
+    // Desaparece y elimina el nodo DOM automáticamente tras 4 segundos
+    setTimeout(() => {
+        toast.style.animation = 'toastIn 0.3s reverse cubic-bezier(0.16, 1, 0.3, 1)';
+        setTimeout(() => {
+            toast.remove();
+        }, 300);
+    }, 4000);
+}
+
+// --- Utilidades Generales ---
+
+/**
+ * Extrae las iniciales de un nombre completo para el avatar visual
+ * @param {string} name - Nombre completo del asesor
+ * @returns {string} Iniciales de dos caracteres
+ */
+function getInitials(name) {
+    if (!name) return 'MG';
+    const parts = name.split(' ');
+    if (parts.length >= 2) {
+        return (parts[0][0] + parts[1][0]).toUpperCase();
+    }
+    return name.slice(0, 2).toUpperCase();
+}
+
+/**
+ * Formatea una fecha o fecha-hora en formato amigable e hispanohablante
+ * @param {string} dateStr - Fecha ISO o cadena SQLite
+ * @returns {string} Fecha formateada (ej. "15 jul 2026" o "15 jul 2026, 17:30")
+ */
+function formatDate(dateStr) {
+    if (!dateStr) return 'N/A';
+    
+    try {
+        const d = new Date(dateStr.replace(' ', 'T'));
+        if (isNaN(d.getTime())) {
+            return dateStr;
+        }
+        
+        const months = [
+            'ene', 'feb', 'mar', 'abr', 'may', 'jun',
+            'jul', 'ago', 'sep', 'oct', 'nov', 'dic'
+        ];
+        
+        const day = d.getDate();
+        const month = months[d.getMonth()];
+        const year = d.getFullYear();
+        
+        // Agrega horas y minutos si la cadena original incluye marca de tiempo
+        if (dateStr.includes(':')) {
+            const hours = String(d.getHours()).padStart(2, '0');
+            const minutes = String(d.getMinutes()).padStart(2, '0');
+            return `${day} ${month} ${year}, ${hours}:${minutes}`;
+        }
+        
+        return `${day} ${month} ${year}`;
+    } catch (e) {
+        return dateStr;
     }
 }

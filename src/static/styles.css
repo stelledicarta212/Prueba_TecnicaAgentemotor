@@ -2,8 +2,11 @@
    Agentemotor CSS - Design System and Stylesheet
    ========================================================================== */
 
-/* Variables and Theme Tokens */
+/* --------------------------------------------------------------------------
+   1. VARIABLES Y TOKENS DEL DISEÑO (LIGHT MODE POR DEFECTO)
+   -------------------------------------------------------------------------- */
 :root {
+    /* Colores base y fondos neutrales */
     --bg-app: #f8fafc;
     --bg-card: #ffffff;
     --text-primary: #0f172a;
@@ -12,40 +15,50 @@
     --border-color: #e2e8f0;
     --border-hover: #cbd5e1;
 
-    /* Theme Colors (HSL) */
+    /* Tema de Colores Primarios (HSL para control preciso) */
     --color-primary: hsl(243, 75%, 59%);
     --color-primary-light: hsl(243, 75%, 96%);
     --color-primary-dark: hsl(243, 75%, 49%);
 
+    /* Prioridad: Renovada (Verde Esmeralda) */
     --color-success: hsl(162, 76%, 39%);
     --color-success-light: hsl(162, 76%, 95%);
     
+    /* Prioridad: Próxima a vencer (Oro/Ámbar) */
     --color-warning: hsl(38, 92%, 50%);
     --color-warning-light: hsl(38, 92%, 95%);
 
+    /* Prioridad: Ventana crítica (Coral/Crimson) */
     --color-danger: hsl(350, 89%, 60%);
     --color-danger-light: hsl(350, 89%, 95%);
 
+    /* Prioridad: Nueva contratación (Púrpura Amatista) */
     --color-purple: hsl(262, 70%, 58%);
     --color-purple-light: hsl(262, 70%, 95%);
 
+    /* Prioridad: Sin prioridad / General (Slate Gray) */
     --color-gray: hsl(215, 15%, 45%);
     --color-gray-light: hsl(215, 15%, 95%);
 
-    /* Layout & Shadows */
+    /* Radios de borde (Borders Radius) */
     --radius-lg: 16px;
     --radius-md: 10px;
     --radius-sm: 6px;
+    
+    /* Sombras (Box Shadows) */
     --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.02);
     --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
     --shadow-lg: 0 10px 25px -5px rgba(0, 0, 0, 0.06), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
     
-    /* Animations */
+    /* Transiciones globales */
     --transition-all: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Dark Theme Variables Override */
+/* --------------------------------------------------------------------------
+   2. VARIABLES Y OVERRIDES DE MODO OSCURO (DARK MODE)
+   -------------------------------------------------------------------------- */
 body.dark-theme {
+    /* Fondos y textos neutrales adaptados para evitar fatiga visual */
     --bg-app: #0f172a;
     --bg-card: #1e293b;
     --text-primary: #f8fafc;
@@ -54,6 +67,7 @@ body.dark-theme {
     --border-color: #334155;
     --border-hover: #475569;
 
+    /* Variantes translúcidas oscuras para fondos de prioridades */
     --color-primary-light: hsl(243, 75%, 15%);
     --color-success-light: hsl(162, 76%, 12%);
     --color-warning-light: hsl(38, 92%, 12%);
@@ -62,7 +76,9 @@ body.dark-theme {
     --color-gray-light: hsl(215, 15%, 20%);
 }
 
-/* Reset & Base Rules */
+/* --------------------------------------------------------------------------
+   3. REGLAS BASE Y RESET GENERAL
+   -------------------------------------------------------------------------- */
 * {
     margin: 0;
     padding: 0;
@@ -78,9 +94,10 @@ body {
     flex-direction: column;
     overflow-x: hidden;
     -webkit-font-smoothing: antialiased;
+    transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-/* Application Container Layout */
+/* Contenedor adaptativo centralizado */
 .app-container {
     max-width: 1400px;
     width: 100%;
@@ -91,7 +108,9 @@ body {
     gap: 32px;
 }
 
-/* Header Component */
+/* --------------------------------------------------------------------------
+   4. CABECERA PRINCIPAL (HEADER COMPONENT)
+   -------------------------------------------------------------------------- */
 .main-header {
     display: flex;
     justify-content: space-between;
@@ -131,12 +150,14 @@ body {
     color: var(--text-secondary);
 }
 
+/* Acciones en la cabecera (Temas y Perfil) */
 .header-actions {
     display: flex;
     align-items: center;
     gap: 16px;
 }
 
+/* Botón flotante selector de tema visual (Claro/Oscuro) */
 .theme-toggle-btn {
     width: 40px;
     height: 40px;
@@ -163,6 +184,7 @@ body {
     transform: scale(0.95);
 }
 
+/* Perfil de Asesor Comercial */
 .user-profile {
     display: flex;
     align-items: center;
@@ -171,6 +193,7 @@ body {
     padding: 8px 16px;
     border-radius: 40px;
     border: 1px solid var(--border-color);
+    transition: var(--transition-all);
 }
 
 body.dark-theme .user-profile {
@@ -206,7 +229,9 @@ body.dark-theme .user-profile {
     color: var(--text-secondary);
 }
 
-/* Metrics Grid / Cards */
+/* --------------------------------------------------------------------------
+   5. REJILLA DE TARJETAS DE KPIs / RESUMEN
+   -------------------------------------------------------------------------- */
 .metrics-grid {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
@@ -259,7 +284,7 @@ body.dark-theme .user-profile {
     color: var(--text-secondary);
 }
 
-/* Card Themes */
+/* Temas específicos para las tarjetas KPIs en base a su prioridad */
 .card-total { border-left: 4px solid var(--color-primary); }
 .card-total .metric-icon { background-color: var(--color-primary-light); color: var(--color-primary); }
 .card-total .metric-value { color: var(--color-primary); }
@@ -280,7 +305,9 @@ body.dark-theme .user-profile {
 .card-success .metric-icon { background-color: var(--color-success-light); color: var(--color-success); }
 .card-success .metric-value { color: var(--color-success); }
 
-/* Controls Panel */
+/* --------------------------------------------------------------------------
+   6. CONTROLES DEL DASHBOARD (FILTROS Y BUSCADOR)
+   -------------------------------------------------------------------------- */
 .controls-panel {
     display: flex;
     justify-content: space-between;
@@ -294,6 +321,7 @@ body.dark-theme .user-profile {
     box-shadow: var(--shadow-sm);
 }
 
+/* Buscador */
 .search-wrapper {
     position: relative;
     flex: 1;
@@ -330,6 +358,15 @@ body.dark-theme .user-profile {
     box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
 }
 
+/* Panel agrupador de pestañas y botones de acción */
+.controls-actions {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+/* Pestañas de filtrado rápido */
 .filter-tabs {
     display: flex;
     gap: 8px;
@@ -358,7 +395,9 @@ body.dark-theme .user-profile {
     color: var(--color-primary);
 }
 
-/* Policies Grid & Cards */
+/* --------------------------------------------------------------------------
+   7. REJILLA DE TARJETAS DE PÓLIZAS (POLICIES GRID)
+   -------------------------------------------------------------------------- */
 .policies-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
@@ -382,13 +421,14 @@ body.dark-theme .user-profile {
     border-color: var(--border-hover);
 }
 
-/* Card Header style mapping priority */
+/* Bordes superiores acentuados por prioridad */
 .policy-card.priority-proxima_a_vencer { border-top: 4px solid var(--color-warning); }
 .policy-card.priority-ventana_critica { border-top: 4px solid var(--color-danger); }
 .policy-card.priority-nueva_contratacion { border-top: 4px solid var(--color-purple); }
 .policy-card.priority-renovada { border-top: 4px solid var(--color-success); }
 .policy-card.priority-sin_prioridad { border-top: 4px solid var(--color-gray); }
 
+/* Cabecera interna de la tarjeta */
 .card-header-row {
     padding: 16px 20px;
     border-bottom: 1px solid var(--border-color);
@@ -397,12 +437,60 @@ body.dark-theme .user-profile {
     align-items: center;
 }
 
+/* Acciones inline de cabecera (Editar y Archivar) */
+.header-policy-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.header-actions-inline {
+    display: flex;
+    gap: 4px;
+    opacity: 0.4;
+    transition: var(--transition-all);
+}
+
+.header-policy-info:hover .header-actions-inline {
+    opacity: 1;
+}
+
+.btn-icon-inline {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    padding: 2px 6px;
+    border-radius: var(--radius-sm);
+    transition: var(--transition-all);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-icon-inline:hover {
+    background-color: rgba(15, 23, 42, 0.08);
+}
+
+.btn-icon-inline.btn-archive:hover {
+    background-color: var(--color-danger-light);
+}
+
+body.dark-theme .btn-icon-inline:hover {
+    background-color: rgba(248, 250, 252, 0.15);
+}
+
+body.dark-theme .btn-icon-inline.btn-archive:hover {
+    background-color: rgba(239, 68, 68, 0.2);
+}
+
 .policy-number {
     font-weight: 700;
     font-size: 15px;
     color: var(--text-primary);
 }
 
+/* Etiqueta / Badge de prioridad comercial */
 .priority-badge {
     padding: 4px 10px;
     font-size: 11px;
@@ -418,7 +506,7 @@ body.dark-theme .user-profile {
 .priority-renovada .priority-badge { background-color: var(--color-success-light); color: var(--color-success); }
 .priority-sin_prioridad .priority-badge { background-color: var(--color-gray-light); color: var(--color-gray); }
 
-/* Card Body Sections */
+/* Secciones de Datos Internos */
 .card-section {
     padding: 16px 20px;
     border-bottom: 1px solid var(--border-color);
@@ -428,7 +516,6 @@ body.dark-theme .user-profile {
     border-bottom: none;
 }
 
-/* Client info layout */
 .client-info h4 {
     font-size: 16px;
     font-weight: 600;
@@ -459,7 +546,6 @@ body.dark-theme .user-profile {
     text-decoration: underline;
 }
 
-/* Policy specific info */
 .policy-details {
     display: flex;
     justify-content: space-between;
@@ -479,7 +565,7 @@ body.dark-theme .user-profile {
     color: var(--text-primary);
 }
 
-/* Date Highlight container */
+/* Resaltador del recuadro de fecha de vencimiento */
 .date-highlight {
     background-color: var(--bg-app);
     border-radius: var(--radius-sm);
@@ -500,13 +586,14 @@ body.dark-theme .user-profile {
     font-size: 14px;
 }
 
+/* Colores de vencimiento sincronizados visualmente */
 .priority-proxima_a_vencer .expiration-date { color: var(--color-warning); }
 .priority-ventana_critica .expiration-date { color: var(--color-danger); }
 .priority-nueva_contratacion .expiration-date { color: var(--color-purple); }
 .priority-renovada .expiration-date { color: var(--color-success); }
 .priority-sin_prioridad .expiration-date { color: var(--color-gray); }
 
-/* History timeline */
+/* Historial de gestiones comerciales (Timeline) */
 .history-section h5 {
     font-size: 12px;
     font-weight: 700;
@@ -525,10 +612,10 @@ body.dark-theme .user-profile {
     padding-right: 4px;
 }
 
-/* Timeline Custom Scrollbar */
 .history-timeline::-webkit-scrollbar {
     width: 4px;
 }
+
 .history-timeline::-webkit-scrollbar-thumb {
     background-color: var(--border-color);
     border-radius: 4px;
@@ -549,6 +636,7 @@ body.dark-theme .user-profile {
     flex-shrink: 0;
 }
 
+/* Puntos de color para el timeline en base al canal de contacto */
 .channel-call .timeline-dot { background-color: var(--color-primary); }
 .channel-email .timeline-dot { background-color: var(--color-warning); }
 .channel-message .timeline-dot { background-color: var(--color-purple); }
@@ -576,7 +664,9 @@ body.dark-theme .user-profile {
     font-style: italic;
 }
 
-/* Card Actions styling */
+/* --------------------------------------------------------------------------
+   8. BOTONES Y ACCIONES INFERIORES DE LA TARJETA
+   -------------------------------------------------------------------------- */
 .card-actions {
     display: flex;
     gap: 12px;
@@ -586,6 +676,7 @@ body.dark-theme .user-profile {
     border-top: 1px solid var(--border-color);
 }
 
+/* Cartel que se muestra en pólizas renovadas exitosamente */
 .renewed-banner {
     display: flex;
     align-items: center;
@@ -601,7 +692,7 @@ body.dark-theme .user-profile {
     border: 1px dashed hsl(162, 76%, 80%);
 }
 
-/* General Buttons */
+/* Botones base */
 .btn {
     display: inline-flex;
     align-items: center;
@@ -655,7 +746,9 @@ body.dark-theme .user-profile {
     flex: 1;
 }
 
-/* Modals */
+/* --------------------------------------------------------------------------
+   9. VENTANAS MODALES (MODALS)
+   -------------------------------------------------------------------------- */
 .modal-backdrop {
     position: fixed;
     top: 0;
@@ -673,7 +766,7 @@ body.dark-theme .user-profile {
 }
 
 .modal-backdrop.hidden {
-    display: none;
+    display: none !important;
     opacity: 0;
     pointer-events: none;
 }
@@ -735,7 +828,9 @@ body.dark-theme .user-profile {
     padding: 24px;
 }
 
-/* Form Styles */
+/* --------------------------------------------------------------------------
+   10. ESTRUCTURAS DE FORMULARIO
+   -------------------------------------------------------------------------- */
 .form-group {
     margin-bottom: 20px;
 }
@@ -752,6 +847,25 @@ body.dark-theme .user-profile {
     margin-bottom: 8px;
 }
 
+/* Divisores de sub-sección del formulario */
+.form-section-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--color-primary);
+    border-bottom: 2px solid var(--border-color);
+    padding-bottom: 8px;
+    margin-bottom: 16px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Disposición en dos columnas para formularios complejos */
+.form-row-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+}
+
 .info-read-only {
     background-color: var(--bg-app);
     padding: 10px 14px;
@@ -762,7 +876,7 @@ body.dark-theme .user-profile {
     border: 1px solid var(--border-color);
 }
 
-/* Radio buttons styled as contact channels card grid */
+/* Radio-cards para selección interactiva de canales de contacto */
 .channel-options {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -810,7 +924,7 @@ body.dark-theme .user-profile {
     color: var(--color-primary);
 }
 
-/* Inputs, Select and Textarea */
+/* Selects, Inputs y Textareas */
 .form-select, .form-input, .form-textarea {
     width: 100%;
     padding: 12px;
@@ -845,7 +959,9 @@ body.dark-theme .user-profile {
     padding-top: 20px;
 }
 
-/* Loading & Empty state */
+/* --------------------------------------------------------------------------
+   11. ESTADOS VISUALES ALTERNATIVOS (CARGANDO / VACÍO)
+   -------------------------------------------------------------------------- */
 .loading-state, .empty-state {
     display: flex;
     flex-direction: column;
@@ -900,7 +1016,7 @@ body.dark-theme .user-profile {
     color: var(--text-secondary);
 }
 
-/* Error banner */
+/* Cartel / Banner de error API */
 .error-banner {
     background-color: var(--color-danger-light);
     border: 1px solid hsl(350, 89%, 90%);
@@ -929,7 +1045,9 @@ body.dark-theme .user-profile {
     font-size: 14px;
 }
 
-/* Toast Notifications */
+/* --------------------------------------------------------------------------
+   12. NOTIFICACIONES FLOTANTES (TOASTS)
+   -------------------------------------------------------------------------- */
 .toast-container {
     position: fixed;
     bottom: 24px;
@@ -973,7 +1091,9 @@ body.dark-theme .user-profile {
 .toast-icon { font-size: 18px; }
 .toast-msg { font-size: 13px; font-weight: 600; color: var(--text-primary); }
 
-/* Responsive adjustments */
+/* --------------------------------------------------------------------------
+   13. REGLAS DE RESPONSIVIDAD (MEDIA QUERIES)
+   -------------------------------------------------------------------------- */
 @media (max-width: 1200px) {
     .metrics-grid {
         grid-template-columns: repeat(3, 1fr);
@@ -1006,6 +1126,10 @@ body.dark-theme .user-profile {
     .search-wrapper {
         max-width: none;
     }
+    .controls-actions {
+        width: 100%;
+        justify-content: space-between;
+    }
     .filter-tabs {
         overflow-x: auto;
         padding-bottom: 4px;
@@ -1016,97 +1140,14 @@ body.dark-theme .user-profile {
     .channel-options {
         grid-template-columns: 1fr;
     }
-}
-
-@media (max-width: 480px) {
-    .metrics-grid {
-        grid-template-columns: 1fr;
-    }
-}
-
-/* Layout controls alignment for tabs + new button */
-.controls-actions {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    flex-wrap: wrap;
-}
-
-@media (max-width: 768px) {
-    .controls-actions {
-        width: 100%;
-        justify-content: space-between;
-    }
-}
-
-/* Modals grid layouts for inputs */
-.form-row-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 24px;
-}
-
-.form-section-title {
-    font-size: 13px;
-    font-weight: 700;
-    color: var(--color-primary);
-    border-bottom: 2px solid var(--border-color);
-    padding-bottom: 8px;
-    margin-bottom: 16px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-@media (max-width: 768px) {
     .form-row-grid {
         grid-template-columns: 1fr;
         gap: 16px;
     }
 }
 
-/* Inline Card Header actions (Edit / Archive) */
-.header-policy-info {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.header-actions-inline {
-    display: flex;
-    gap: 4px;
-    opacity: 0.4;
-    transition: var(--transition-all);
-}
-
-.header-policy-info:hover .header-actions-inline {
-    opacity: 1;
-}
-
-.btn-icon-inline {
-    background: none;
-    border: none;
-    cursor: pointer;
-    font-size: 14px;
-    padding: 2px 6px;
-    border-radius: var(--radius-sm);
-    transition: var(--transition-all);
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.btn-icon-inline:hover {
-    background-color: rgba(15, 23, 42, 0.08);
-}
-
-.btn-icon-inline.btn-archive:hover {
-    background-color: var(--color-danger-light);
-}
-
-body.dark-theme .btn-icon-inline:hover {
-    background-color: rgba(248, 250, 252, 0.15);
-}
-
-body.dark-theme .btn-icon-inline.btn-archive:hover {
-    background-color: rgba(239, 68, 68, 0.2);
+@media (max-width: 480px) {
+    .metrics-grid {
+        grid-template-columns: 1fr;
+    }
 }

@@ -1,4 +1,27 @@
-from datetime import date, datetime
+"""
+==============================================================================
+Agentemotor - Flask REST API Core
+==============================================================================
+Este archivo implementa el servidor web REST API utilizando el micro-framework
+Flask. Actúa como la única capa de abstracción autorizada para realizar operaciones
+de lectura y escritura contra la base de datos SQLite (única fuente de verdad).
+
+Reglas de Negocio Implementadas:
+1. Clasificación Automática de Prioridades:
+   - "renovada": Si la póliza tiene un estado de renovación "renewed".
+   - "proxima_a_vencer": Pólizas pendientes que vencen en los próximos 30 días.
+   - "ventana_critica": Pólizas pendientes vencidas hace entre 1 y 30 días.
+   - "nueva_contratacion": Pólizas pendientes vencidas hace más de 30 días.
+   - "sin_prioridad": Pólizas pendientes que vencen en más de 30 días en el futuro.
+2. Trazabilidad de Interacciones:
+   - Registro de intentos de contacto (Llamada, Correo, Mensaje) guardados
+     directamente en la tabla relacional "contact_attempts".
+3. Archivación Lógica:
+   - Actualiza "archived_at" con la fecha actual, excluyéndose automáticamente
+     del dashboard sin destruir registros físicos.
+"""
+
+from datetime import date, datetime, timezone
 import os
 import sqlite3
 
@@ -7,7 +30,10 @@ from flask import Flask, jsonify, request, render_template
 import db
 
 
+# Canales de comunicación válidos y admitidos por la base de datos
 VALID_CONTACT_CHANNELS = {"call", "email", "message"}
+
+# Datos del Asesor de Demostración por defecto para inicialización
 DEMO_ADVISOR = {
     "name": "Maria Gonzalez",
     "email": "maria.gonzalez@agentemotor.test",
@@ -16,19 +42,37 @@ DEMO_ADVISOR = {
 
 
 def create_app(database_path=None):
+    """
+    Fábrica de Aplicaciones Flask (Application Factory).
+    Configura e inicializa la aplicación, la base de datos y define las rutas HTTP.
+    """
     app = Flask(__name__)
+    
+    # Determina la ruta física de SQLite desde el entorno o usa el valor por defecto
     database_path = database_path or os.environ.get(
         "AGENTEMOTOR_DATABASE_PATH",
         db.DATABASE_PATH,
     )
+    
+    # Crea el esquema de base de datos si no existe al arrancar el servidor
     db.initialize_schema(database_path)
 
     @app.get("/")
     def index():
+        """
+        GET /
+        Sirve la interfaz principal Single Page Application (SPA) para el usuario.
+        """
         return render_template("index.html")
 
     @app.get("/api/dashboard")
     def get_dashboard():
+        """
+        GET /api/dashboard
+        Retorna las métricas consolidadas (summary) y el listado de pólizas vigentes
+        y pendientes no archivadas clasificadas por prioridad de negocio.
+        """
+        # Ejecuta la consulta SQL relacional uniendo pólizas, clientes y asesores
         policies = db.fetch_all(
             """
             SELECT
@@ -56,6 +100,7 @@ def create_app(database_path=None):
             db_path=database_path,
         )
 
+        # Genera el JSON estructurado mapeando cada póliza y adjuntando su historial
         dashboard_policies = [build_policy_response(policy, database_path=database_path) for policy in policies]
         return jsonify(
             {
@@ -66,11 +111,24 @@ def create_app(database_path=None):
 
     @app.post("/api/contact-attempts")
     def create_contact_attempt():
+        """
+        POST /api/contact-attempts
+        Registra una interacción de contacto realizada con el cliente asociado a una póliza.
+        JSON Payload:
+        {
+          "policy_id": int,
+          "channel": "call" | "email" | "message",
+          "result": str,
+          "notes": str (opcional),
+          "attempted_at": "YYYY-MM-DDTHH:MM:SS" (opcional)
+        }
+        """
         payload = request.get_json(silent=True) or {}
         error = validate_contact_attempt_payload(payload)
         if error:
             return jsonify({"error": error}), 400
 
+        # Recupera datos relacionales de cliente y asesor derivados de la póliza
         policy = db.fetch_one(
             """
             SELECT
@@ -91,6 +149,7 @@ def create_app(database_path=None):
         if attempted_at and not is_valid_datetime(attempted_at):
             return jsonify({"error": "attempted_at must be a valid ISO datetime"}), 400
 
+        # Inserta el registro en SQLite usando el timestamp provisto o el DEFAULT actual
         if attempted_at:
             result = db.execute_query(
                 """
@@ -140,6 +199,7 @@ def create_app(database_path=None):
                 db_path=database_path,
             )
 
+        # Retorna el registro creado directamente desde la base de datos
         contact_attempt = db.fetch_one(
             "SELECT * FROM contact_attempts WHERE id = ?",
             (result["lastrowid"],),
@@ -149,16 +209,37 @@ def create_app(database_path=None):
 
     @app.post("/api/policies")
     def create_policy():
+        """
+        POST /api/policies
+        Crea un nuevo Cliente y le asocia una Póliza de seguro bajo una transacción ACID.
+        JSON Payload:
+        {
+          "client": {
+            "full_name": str,
+            "document_number": str (opcional),
+            "email": str (opcional),
+            "phone": str (opcional)
+          },
+          "policy": {
+            "policy_number": str,
+            "insurance_type": str,
+            "insurer": str (opcional),
+            "expiration_date": "YYYY-MM-DD"
+          }
+        }
+        """
         payload = request.get_json(silent=True) or {}
         error = validate_policy_payload(payload, require_all=True)
         if error:
             return jsonify({"error": error}), 400
 
+        # Obtiene el asesor responsable por defecto de la cartera
         advisor = get_or_create_advisor(database_path)
         client_payload = payload["client"]
         policy_payload = payload["policy"]
 
         try:
+            # Ejecuta la transacción de inserción para garantizar atomicidad e integridad
             transaction_results = db.execute_transaction(
                 [
                     (
@@ -202,8 +283,10 @@ def create_app(database_path=None):
                 db_path=database_path,
             )
         except sqlite3.IntegrityError as error:
+            # Controla violaciones de restricciones UNIQUE de números de documento o pólizas
             return handle_policy_creation_integrity_error(error)
 
+        # Recupera el objeto creado completo para retornar al cliente
         created_policy = get_policy_response(
             transaction_results[-1]["lastrowid"],
             database_path,
@@ -212,6 +295,15 @@ def create_app(database_path=None):
 
     @app.put("/api/policies/<int:policy_id>")
     def update_policy(policy_id):
+        """
+        PUT /api/policies/<int:policy_id>
+        Modifica los campos del Cliente y/o la Póliza utilizando lógica COALESCE de SQLite.
+        JSON Payload:
+        {
+          "client": { ... campos opcionales ... },
+          "policy": { ... campos opcionales ... }
+        }
+        """
         payload = request.get_json(silent=True) or {}
         error = validate_policy_payload(payload, require_all=False)
         if error:
@@ -228,6 +320,7 @@ def create_app(database_path=None):
         client_payload = payload.get("client") or {}
         policy_payload = payload.get("policy") or {}
 
+        # 1. Actualiza el Cliente asociado si el payload lo incluye
         if client_payload:
             db.execute_query(
                 """
@@ -250,8 +343,10 @@ def create_app(database_path=None):
                 db_path=database_path,
             )
 
+        # 2. Actualiza los detalles de la póliza si el payload los incluye
         if policy_payload:
             if policy_payload.get("policy_number"):
+                # Valida que el número de póliza no pertenezca a otra póliza existente
                 existing_policy = db.fetch_one(
                     "SELECT id FROM policies WHERE policy_number = ? AND id <> ?",
                     (policy_payload["policy_number"], policy_id),
@@ -281,11 +376,17 @@ def create_app(database_path=None):
                 db_path=database_path,
             )
 
+        # Retorna el objeto actualizado completo
         updated_policy = get_policy_response(policy_id, database_path)
         return jsonify({"policy": updated_policy})
 
     @app.patch("/api/policies/<int:policy_id>/archive")
     def archive_policy(policy_id):
+        """
+        PATCH /api/policies/<int:policy_id>/archive
+        Archiva lógicamente una póliza (asigna archived_at) para excluirla de las alertas del dashboard
+        sin destruir físicamente los datos históricos.
+        """
         policy = db.fetch_one(
             "SELECT id FROM policies WHERE id = ?",
             (policy_id,),
@@ -311,6 +412,15 @@ def create_app(database_path=None):
 
     @app.post("/api/policies/<int:policy_id>/renew")
     def renew_policy(policy_id):
+        """
+        POST /api/policies/<int:policy_id>/renew
+        Renueva una póliza comercialmente. Actualiza la fecha de vencimiento acordada,
+        marca su renewal_status en 'renewed' e inactiva las gestiones prioritarias comerciales.
+        JSON Payload:
+        {
+          "expiration_date": "YYYY-MM-DD"
+        }
+        """
         payload = request.get_json(silent=True) or {}
         new_expiration_date = payload.get("expiration_date")
         if not new_expiration_date:
@@ -326,6 +436,7 @@ def create_app(database_path=None):
         if policy is None:
             return jsonify({"error": "Policy not found"}), 404
 
+        # Actualiza el estado y fecha de renovación en SQLite
         db.execute_query(
             """
             UPDATE policies
@@ -340,6 +451,7 @@ def create_app(database_path=None):
             db_path=database_path,
         )
 
+        # Recupera el registro modificado con todos los datos y su historial de intentos
         renewed_policy = db.fetch_one(
             """
             SELECT
@@ -372,6 +484,10 @@ def create_app(database_path=None):
 
 
 def build_policy_response(policy, database_path=None):
+    """
+    Formatea la póliza y le calcula la prioridad comercial de negocio.
+    Adicionalmente, consulta y adjunta cronológicamente su historial de gestiones.
+    """
     priority = classify_policy(
         policy["expiration_date"],
         policy["renewal_status"],
@@ -408,6 +524,10 @@ def build_policy_response(policy, database_path=None):
 
 
 def get_policy_response(policy_id, database_path):
+    """
+    Función auxiliar para recuperar una póliza específica uniendo las tablas
+    relacionales por su id único y retornando su payload completo.
+    """
     policy = db.fetch_one(
         """
         SELECT
@@ -440,6 +560,10 @@ def get_policy_response(policy_id, database_path):
 
 
 def get_or_create_advisor(database_path):
+    """
+    Retorna el primer asesor registrado en SQLite o crea el asesor demo
+    si la base de datos se encuentra vacía.
+    """
     advisor = db.fetch_one(
         "SELECT id, name FROM advisors ORDER BY id ASC LIMIT 1",
         db_path=database_path,
@@ -467,6 +591,10 @@ def get_or_create_advisor(database_path):
 
 
 def handle_policy_creation_integrity_error(error):
+    """
+    Mapeador amigable de errores de integridad relacional (UNIQUE constraints).
+    Traduce las excepciones crudas de SQLite a respuestas JSON legibles con código 400.
+    """
     message = str(error)
     if "clients.document_number" in message:
         return jsonify({"error": "Ya existe un cliente con ese documento."}), 400
@@ -476,11 +604,17 @@ def handle_policy_creation_integrity_error(error):
 
 
 def classify_policy(expiration_date, renewal_status):
+    """
+    Clasificador de Prioridades (Regla de Negocio Core).
+    Calcula dinámicamente la prioridad operativa de una póliza en base a la
+    fecha actual (en UTC para mantener consistencia con SQLite) y la diferencia
+    en días frente a su fecha de vencimiento.
+    """
     if renewal_status == "renewed":
         return "renovada"
 
     days_until_expiration = (
-        datetime.strptime(expiration_date, "%Y-%m-%d").date() - date.today()
+        datetime.strptime(expiration_date, "%Y-%m-%d").date() - datetime.now(timezone.utc).date()
     ).days
 
     if 0 <= days_until_expiration <= 30:
@@ -493,6 +627,10 @@ def classify_policy(expiration_date, renewal_status):
 
 
 def build_dashboard_summary(policies):
+    """
+    Construye las estadísticas cuantitativas del dashboard agrupándolas
+    según su clasificación de prioridad para consumo de las tarjetas KPIs.
+    """
     summary = {
         "total": len(policies),
         "proxima_a_vencer": 0,
@@ -507,6 +645,7 @@ def build_dashboard_summary(policies):
 
 
 def validate_contact_attempt_payload(payload):
+    """Validador de entrada para el registro de gestiones comerciales."""
     if not payload.get("policy_id"):
         return "policy_id is required"
     if not isinstance(payload["policy_id"], int):
@@ -519,6 +658,7 @@ def validate_contact_attempt_payload(payload):
 
 
 def validate_policy_payload(payload, require_all):
+    """Validador de entrada flexible para la creación y edición de pólizas y clientes."""
     client_payload = payload.get("client")
     policy_payload = payload.get("policy")
 
@@ -551,6 +691,7 @@ def validate_policy_payload(payload, require_all):
 
 
 def is_valid_date(value):
+    """Validador auxiliar de fechas simples en formato ISO YYYY-MM-DD."""
     try:
         datetime.strptime(value, "%Y-%m-%d")
     except (TypeError, ValueError):
@@ -559,6 +700,7 @@ def is_valid_date(value):
 
 
 def is_valid_datetime(value):
+    """Validador auxiliar de fechas-horas completas en formato ISO YYYY-MM-DDTHH:MM:SS."""
     try:
         datetime.fromisoformat(value)
     except (TypeError, ValueError):
@@ -566,8 +708,10 @@ def is_valid_datetime(value):
     return True
 
 
+# Instancia de aplicación Flask lista para ejecución
 app = create_app()
 
 
+# Punto de arranque principal para ejecución directa
 if __name__ == "__main__":
     app.run(debug=False)

@@ -4,17 +4,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Agentemotor - Dashboard de Renovaciones</title>
-    <!-- Google Fonts -->
+    <!-- Fuentes tipográficas optimizadas para producción: Outfit de Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <!-- CSS Estilos -->
+    <!-- Estilos de la aplicación -->
     <link rel="stylesheet" href="/static/styles.css">
 </head>
 <body>
+    <!-- Contenedor general adaptativo de la aplicación -->
     <div class="app-container">
-        <!-- Sidebar / Header Layout -->
+        
+        <!-- Cabecera Principal (Header) -->
         <header class="main-header">
+            <!-- Sección de Logotipo y Marca -->
             <div class="logo-area">
                 <div class="logo-icon">⚡</div>
                 <div class="logo-text">
@@ -22,12 +25,17 @@
                     <span>Gestión de Renovaciones</span>
                 </div>
             </div>
+            
+            <!-- Acciones de Cabecera: Cambio de tema y Perfil de Asesor -->
             <div class="header-actions">
-                <button id="theme-toggle" class="theme-toggle-btn" aria-label="Cambiar tema">
+                <!-- Botón de selector de tema Claro/Oscuro -->
+                <button id="theme-toggle" class="theme-toggle-btn" aria-label="Cambiar tema visual (claro u oscuro)">
                     <span class="theme-icon" id="theme-icon">🌙</span>
                 </button>
+                
+                <!-- Perfil del Asesor Comercial conectado -->
                 <div class="user-profile">
-                    <div class="avatar">MG</div>
+                    <div class="avatar" aria-hidden="true">MG</div>
                     <div class="user-info">
                         <span class="user-name" id="advisor-name">María González</span>
                         <span class="user-role">Asesora Comercial</span>
@@ -36,38 +44,45 @@
             </div>
         </header>
 
+        <!-- Contenido Principal del Dashboard -->
         <main class="main-content">
-            <!-- Metrics Summary Cards -->
-            <section class="metrics-grid" aria-label="Resumen de métricas">
-                <div class="metric-card card-total" data-filter="all" onclick="filterByPriority('all')" role="button" tabindex="0">
+            
+            <!-- Panel superior: Resumen de Métricas / KPIs del Asesor -->
+            <section class="metrics-grid" aria-label="Resumen de métricas operativas">
+                <!-- KPI: Total de Pólizas -->
+                <div class="metric-card card-total" data-filter="all" onclick="filterByPriority('all')" role="button" tabindex="0" title="Ver todas las pólizas">
                     <div class="metric-icon">📁</div>
                     <div class="metric-data">
                         <span class="metric-value" id="stat-total">0</span>
                         <span class="metric-label">Total Pólizas</span>
                     </div>
                 </div>
-                <div class="metric-card card-warning" data-filter="proxima_a_vencer" onclick="filterByPriority('proxima_a_vencer')" role="button" tabindex="0">
+                <!-- KPI: Próximas a vencer (<= 30 días de vencimiento) -->
+                <div class="metric-card card-warning" data-filter="proxima_a_vencer" onclick="filterByPriority('proxima_a_vencer')" role="button" tabindex="0" title="Ver pólizas próximas a vencer">
                     <div class="metric-icon">⏳</div>
                     <div class="metric-data">
                         <span class="metric-value" id="stat-proxima">0</span>
                         <span class="metric-label">Próxima a vencer</span>
                     </div>
                 </div>
-                <div class="metric-card card-danger" data-filter="ventana_critica" onclick="filterByPriority('ventana_critica')" role="button" tabindex="0">
+                <!-- KPI: Ventana crítica (Vencidas hace 1 a 30 días) -->
+                <div class="metric-card card-danger" data-filter="ventana_critica" onclick="filterByPriority('ventana_critica')" role="button" tabindex="0" title="Ver pólizas en ventana crítica">
                     <div class="metric-icon">🚨</div>
                     <div class="metric-data">
                         <span class="metric-value" id="stat-critica">0</span>
                         <span class="metric-label">Ventana crítica</span>
                     </div>
                 </div>
-                <div class="metric-card card-purple" data-filter="nueva_contratacion" onclick="filterByPriority('nueva_contratacion')" role="button" tabindex="0">
+                <!-- KPI: Nueva contratación (Vencidas hace > 30 días) -->
+                <div class="metric-card card-purple" data-filter="nueva_contratacion" onclick="filterByPriority('nueva_contratacion')" role="button" tabindex="0" title="Ver pólizas consideradas nueva contratación">
                     <div class="metric-icon">✨</div>
                     <div class="metric-data">
                         <span class="metric-value" id="stat-nueva">0</span>
                         <span class="metric-label">Nueva contratación</span>
                     </div>
                 </div>
-                <div class="metric-card card-success" data-filter="renovada" onclick="filterByPriority('renovada')" role="button" tabindex="0">
+                <!-- KPI: Pólizas Renovadas comercialmente -->
+                <div class="metric-card card-success" data-filter="renovada" onclick="filterByPriority('renovada')" role="button" tabindex="0" title="Ver pólizas ya renovadas exitosamente">
                     <div class="metric-icon">✅</div>
                     <div class="metric-data">
                         <span class="metric-value" id="stat-renovada">0</span>
@@ -76,99 +91,114 @@
                 </div>
             </section>
 
-            <!-- Search and Controls Row -->
+            <!-- Panel de Controles: Barra de búsqueda, pestañas de filtrado rápido y botón de creación -->
             <section class="controls-panel">
+                <!-- Buscador de texto predictivo -->
                 <div class="search-wrapper">
-                    <span class="search-icon">🔍</span>
-                    <input type="text" id="search-input" placeholder="Buscar por cliente, póliza o aseguradora..." aria-label="Buscar pólizas">
+                    <span class="search-icon" aria-hidden="true">🔍</span>
+                    <input type="text" id="search-input" placeholder="Buscar por cliente, póliza o aseguradora..." aria-label="Buscador de pólizas activas">
                 </div>
+                
+                <!-- Controles de acción: pestañas y botón de registro de pólizas -->
                 <div class="controls-actions">
-                    <div class="filter-tabs">
-                        <button class="tab-btn active" id="tab-all" onclick="filterByPriority('all')">Todas</button>
-                        <button class="tab-btn" id="tab-proxima_a_vencer" onclick="filterByPriority('proxima_a_vencer')">Próximas a vencer</button>
-                        <button class="tab-btn" id="tab-ventana_critica" onclick="filterByPriority('ventana_critica')">Ventana crítica</button>
-                        <button class="tab-btn" id="tab-nueva_contratacion" onclick="filterByPriority('nueva_contratacion')">Nueva contratación</button>
-                        <button class="tab-btn" id="tab-renovada" onclick="filterByPriority('renovada')">Renovadas</button>
+                    <!-- Pestañas de filtrado rápido por prioridad -->
+                    <div class="filter-tabs" role="tablist">
+                        <button class="tab-btn active" id="tab-all" onclick="filterByPriority('all')" role="tab" aria-selected="true">Todas</button>
+                        <button class="tab-btn" id="tab-proxima_a_vencer" onclick="filterByPriority('proxima_a_vencer')" role="tab" aria-selected="false">Próximas a vencer</button>
+                        <button class="tab-btn" id="tab-ventana_critica" onclick="filterByPriority('ventana_critica')" role="tab" aria-selected="false">Ventana crítica</button>
+                        <button class="tab-btn" id="tab-nueva_contratacion" onclick="filterByPriority('nueva_contratacion')" role="tab" aria-selected="false">Nueva contratación</button>
+                        <button class="tab-btn" id="tab-renovada" onclick="filterByPriority('renovada')" role="tab" aria-selected="false">Renovadas</button>
                     </div>
-                    <button class="btn btn-primary" onclick="openCreatePolicyModal()">
+                    <!-- Botón de apertura para crear clientes y pólizas -->
+                    <button class="btn btn-primary" onclick="openCreatePolicyModal()" aria-haspopup="dialog" title="Registrar un nuevo cliente con su póliza de seguro">
                         <span>➕</span> Nueva Póliza
                     </button>
                 </div>
             </section>
 
-            <!-- Loading State -->
-            <div id="loading-spinner" class="loading-state hidden">
-                <div class="spinner"></div>
+            <!-- Estados Visuales Alternativos -->
+            
+            <!-- Estado: Cargando datos (Loading) -->
+            <div id="loading-spinner" class="loading-state hidden" aria-live="polite">
+                <div class="spinner" aria-hidden="true"></div>
                 <p>Cargando información desde SQLite...</p>
             </div>
 
-            <!-- Error State -->
-            <div id="error-banner" class="error-banner hidden">
+            <!-- Estado: Error de Conexión o API -->
+            <div id="error-banner" class="error-banner hidden" role="alert">
                 <div class="error-content">
-                    <span class="error-icon">⚠️</span>
+                    <span class="error-icon" aria-hidden="true">⚠️</span>
                     <p id="error-message">Ha ocurrido un error al conectar con la API.</p>
                     <button class="btn btn-secondary" onclick="loadDashboard()">Reintentar</button>
                 </div>
             </div>
 
-            <!-- Empty State -->
+            <!-- Estado: Rejilla Vacía (No hay pólizas que coincidan) -->
             <div id="empty-state" class="empty-state hidden">
-                <div class="empty-icon">📭</div>
+                <div class="empty-icon" aria-hidden="true">📭</div>
                 <h3>No se encontraron pólizas</h3>
-                <p>No hay registros que coincidan con la búsqueda o filtro seleccionado.</p>
+                <p>No hay registros que coincidan con la búsqueda o el filtro seleccionado.</p>
             </div>
 
-            <!-- Policies Grid -->
-            <section class="policies-grid" id="policies-container">
-                <!-- Javascript will inject cards here -->
+            <!-- Rejilla Principal para Renderizado de Tarjetas de Pólizas -->
+            <section class="policies-grid" id="policies-container" aria-live="polite">
+                <!-- El Javascript de la aplicación inyectará las tarjetas de forma dinámica aquí -->
             </section>
         </main>
     </div>
 
-    <!-- Modal: Registrar Gestión -->
-    <div class="modal-backdrop hidden" id="modal-gestion">
+    <!-- Modales de la Aplicación -->
+
+    <!-- Modal 1: Registrar Gestión Comercial (Historial de Llamadas/Correos) -->
+    <div class="modal-backdrop hidden" id="modal-gestion" role="presentation">
         <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="modal-gestion-title">
+            <!-- Cabecera del modal -->
             <div class="modal-header">
                 <h2 id="modal-gestion-title">Registrar Gestión Comercial</h2>
-                <button class="close-btn" onclick="closeModal('modal-gestion')">&times;</button>
+                <button class="close-btn" onclick="closeModal('modal-gestion')" aria-label="Cerrar modal">&times;</button>
             </div>
+            <!-- Formulario de gestión comercial -->
             <form id="form-gestion" onsubmit="submitGestion(event)">
+                <!-- ID de la póliza oculta -->
                 <input type="hidden" id="gestion-policy-id">
                 
+                <!-- Datos básicos informativos (solo lectura) -->
                 <div class="form-group">
                     <label>Póliza / Cliente</label>
-                    <div class="info-read-only" id="gestion-policy-info">
+                    <div class="info-read-only" id="gestion-policy-info" aria-readonly="true">
                         POL-XXXX-XXXX | Cliente
                     </div>
                 </div>
 
+                <!-- Selección visual del canal de contacto (Llamada, Correo, Mensaje) -->
                 <div class="form-group">
                     <label>Canal de Contacto *</label>
                     <div class="channel-options">
                         <label class="channel-card">
                             <input type="radio" name="channel" value="call" required>
                             <span class="channel-content">
-                                <span class="chan-icon">📞</span>
+                                <span class="chan-icon" aria-hidden="true">📞</span>
                                 <span class="chan-text">Llamada</span>
                             </span>
                         </label>
                         <label class="channel-card">
                             <input type="radio" name="channel" value="email">
                             <span class="channel-content">
-                                <span class="chan-icon">✉️</span>
+                                <span class="chan-icon" aria-hidden="true">✉️</span>
                                 <span class="chan-text">Correo</span>
                             </span>
                         </label>
                         <label class="channel-card">
                             <input type="radio" name="channel" value="message">
                             <span class="channel-content">
-                                <span class="chan-icon">💬</span>
+                                <span class="chan-icon" aria-hidden="true">💬</span>
                                 <span class="chan-text">Mensaje</span>
                             </span>
                         </label>
                     </div>
                 </div>
 
+                <!-- Selección del resultado del contacto comercial -->
                 <div class="form-group">
                     <label for="gestion-result">Resultado de la Gestión *</label>
                     <select id="gestion-result" required class="form-select">
@@ -183,17 +213,20 @@
                     </select>
                 </div>
 
+                <!-- Notas y observaciones detalladas de la llamada -->
                 <div class="form-group">
                     <label for="gestion-notes">Notas / Observaciones</label>
                     <textarea id="gestion-notes" rows="3" placeholder="Detalle de la conversación, compromisos o comentarios adicionales..." class="form-textarea"></textarea>
                 </div>
 
+                <!-- Fecha y hora de realización del contacto (Opcional, por defecto Ahora) -->
                 <div class="form-group">
                     <label for="gestion-date">Fecha y Hora de la Gestión (Opcional)</label>
                     <input type="datetime-local" id="gestion-date" class="form-input">
                     <small class="form-help">Si se deja vacío, se registrará la fecha y hora actual del sistema.</small>
                 </div>
 
+                <!-- Botones de Confirmación -->
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" onclick="closeModal('modal-gestion')">Cancelar</button>
                     <button type="submit" class="btn btn-primary">Guardar Gestión</button>
@@ -202,29 +235,35 @@
         </div>
     </div>
 
-    <!-- Modal: Renovar Póliza -->
-    <div class="modal-backdrop hidden" id="modal-renew">
+    <!-- Modal 2: Renovar Póliza (Fecha nueva de vigencia) -->
+    <div class="modal-backdrop hidden" id="modal-renew" role="presentation">
         <div class="modal-box small-modal" role="dialog" aria-modal="true" aria-labelledby="modal-renew-title">
+            <!-- Cabecera del modal -->
             <div class="modal-header">
                 <h2 id="modal-renew-title">Renovar Póliza</h2>
-                <button class="close-btn" onclick="closeModal('modal-renew')">&times;</button>
+                <button class="close-btn" onclick="closeModal('modal-renew')" aria-label="Cerrar modal">&times;</button>
             </div>
+            <!-- Formulario de renovación -->
             <form id="form-renew" onsubmit="submitRenew(event)">
+                <!-- ID de póliza oculta -->
                 <input type="hidden" id="renew-policy-id">
                 
+                <!-- Datos informativos básicos (solo lectura) -->
                 <div class="form-group">
                     <label>Póliza a Renovar</label>
-                    <div class="info-read-only" id="renew-policy-info">
+                    <div class="info-read-only" id="renew-policy-info" aria-readonly="true">
                         POL-XXXX-XXXX
                     </div>
                 </div>
 
+                <!-- Entrada para la nueva fecha de vencimiento acordada -->
                 <div class="form-group">
                     <label for="renew-expiration-date">Nueva Fecha de Vencimiento *</label>
                     <input type="date" id="renew-expiration-date" required class="form-input">
                     <small class="form-help" id="renew-date-help">La nueva fecha debe ser posterior a la fecha actual para mantener vigencia.</small>
                 </div>
 
+                <!-- Botones de Confirmación -->
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" onclick="closeModal('modal-renew')">Cancelar</button>
                     <button type="submit" class="btn btn-success">Renovar e Inactivar Gestión</button>
@@ -233,16 +272,18 @@
         </div>
     </div>
 
-    <!-- Modal: Nueva Póliza -->
-    <div class="modal-backdrop hidden" id="modal-create-policy">
+    <!-- Modal 3: Crear Póliza + Cliente (Ingreso de nueva cartera) -->
+    <div class="modal-backdrop hidden" id="modal-create-policy" role="presentation">
         <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="modal-create-title">
+            <!-- Cabecera del modal -->
             <div class="modal-header">
                 <h2 id="modal-create-title">Crear Cliente + Póliza</h2>
-                <button class="close-btn" onclick="closeModal('modal-create-policy')">&times;</button>
+                <button class="close-btn" onclick="closeModal('modal-create-policy')" aria-label="Cerrar modal">&times;</button>
             </div>
+            <!-- Formulario estructurado en columnas -->
             <form id="form-create-policy" onsubmit="submitCreatePolicy(event)">
                 <div class="form-row-grid">
-                    <!-- Client Section -->
+                    <!-- Columna Izquierda: Información del Cliente -->
                     <div class="form-section-column">
                         <h3 class="form-section-title">Información del Cliente</h3>
                         <div class="form-group">
@@ -263,7 +304,7 @@
                         </div>
                     </div>
                     
-                    <!-- Policy Section -->
+                    <!-- Columna Derecha: Información de la Póliza -->
                     <div class="form-section-column">
                         <h3 class="form-section-title">Información de la Póliza</h3>
                         <div class="form-group">
@@ -293,6 +334,7 @@
                     </div>
                 </div>
 
+                <!-- Botones de Confirmación -->
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" onclick="closeModal('modal-create-policy')">Cancelar</button>
                     <button type="submit" class="btn btn-primary">Crear Registro</button>
@@ -301,17 +343,20 @@
         </div>
     </div>
 
-    <!-- Modal: Editar Póliza -->
-    <div class="modal-backdrop hidden" id="modal-edit-policy">
+    <!-- Modal 4: Editar Póliza + Cliente (Modificación de datos existentes) -->
+    <div class="modal-backdrop hidden" id="modal-edit-policy" role="presentation">
         <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="modal-edit-title">
+            <!-- Cabecera del modal -->
             <div class="modal-header">
                 <h2 id="modal-edit-title">Editar Cliente + Póliza</h2>
-                <button class="close-btn" onclick="closeModal('modal-edit-policy')">&times;</button>
+                <button class="close-btn" onclick="closeModal('modal-edit-policy')" aria-label="Cerrar modal">&times;</button>
             </div>
+            <!-- Formulario estructurado en columnas -->
             <form id="form-edit-policy" onsubmit="submitEditPolicy(event)">
+                <!-- ID de la póliza oculta a actualizar -->
                 <input type="hidden" id="edit-policy-id">
                 <div class="form-row-grid">
-                    <!-- Client Section -->
+                    <!-- Columna Izquierda: Información del Cliente -->
                     <div class="form-section-column">
                         <h3 class="form-section-title">Información del Cliente</h3>
                         <div class="form-group">
@@ -332,7 +377,7 @@
                         </div>
                     </div>
                     
-                    <!-- Policy Section -->
+                    <!-- Columna Derecha: Información de la Póliza -->
                     <div class="form-section-column">
                         <h3 class="form-section-title">Información de la Póliza</h3>
                         <div class="form-group">
@@ -361,6 +406,7 @@
                     </div>
                 </div>
 
+                <!-- Botones de Confirmación -->
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" onclick="closeModal('modal-edit-policy')">Cancelar</button>
                     <button type="submit" class="btn btn-primary">Guardar Cambios</button>
@@ -369,10 +415,10 @@
         </div>
     </div>
 
-    <!-- Toast Notification Container -->
-    <div id="toast-container" class="toast-container"></div>
+    <!-- Contenedor flotante para alertas no bloqueantes (Toasts Notifications) -->
+    <div id="toast-container" class="toast-container" aria-live="assertive"></div>
 
-    <!-- JS Aplicación -->
+    <!-- Scripts de la aplicación -->
     <script src="/static/app.js"></script>
 </body>
 </html>
